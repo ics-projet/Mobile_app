@@ -1,5 +1,6 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'dashboard_screen.dart';
 
 void main() {
   runApp(const SMSGatewayApp());
@@ -289,14 +290,17 @@ class _LoginScreenState extends State<LoginScreen>
     try {
       // Simulate API delay
       await Future.delayed(const Duration(milliseconds: 1500));
-      
+
       // Simple validation (replace with actual API call)
       if (_apiKeyController.text.length >= 8) {
-        // Success - Navigate to dashboard (will be implemented later)
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login successful! Dashboard coming soon...'),
-            backgroundColor: Colors.green,
+        final username = _apiKeyController.text; // Use API key as username for now
+
+        // Navigate to DashboardScreen
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DashboardScreen(username: username),
           ),
         );
       } else {
@@ -309,6 +313,7 @@ class _LoginScreenState extends State<LoginScreen>
         _isLoading = false;
       });
     }
+
   }
 
   @override
