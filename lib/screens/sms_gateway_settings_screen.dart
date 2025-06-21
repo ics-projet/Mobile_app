@@ -100,7 +100,7 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
           child: Column(
             children: [
                   CustomAppBar(
-                            activeTab: 'logs',
+                            activeTab: 'settings',
                             onDashboardTap: () => Navigator.pushNamed(
                                 context,
                                 '/dashboard',

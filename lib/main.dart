@@ -24,32 +24,50 @@ class SMSGatewayApp extends StatelessWidget {
       routes: {
         '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
-       // '/settings': (context) => const SmsGatewaySettingsScreen(),
+      // '/settings': (context) => const SmsGatewaySettingsScreen(),
       },
-      onGenerateRoute: (settings) {
-        if (settings.name == '/dashboard') {
-          final args = settings.arguments as Map<String, dynamic>;
-          return MaterialPageRoute(
-            builder: (context) => DashboardScreen(username: args['username']),
-          );
-        } else if (settings.name == '/logs') {
-          final args = settings.arguments;
-          if (args != null && args is Map<String, dynamic>) {
-            return MaterialPageRoute(
-              builder: (context) => LogsScreen(username: args['username']),
-            );
-          } else {
-            // Optionally handle missing arguments with fallback UI or error
-            return MaterialPageRoute(
-              builder: (context) => const Scaffold(
-                body: Center(child: Text('Missing or invalid arguments for /logs')),
-              ),
-            );
-          }
-        }
+onGenerateRoute: (settings) {
+  if (settings.name == '/dashboard') {
+    final args = settings.arguments as Map<String, dynamic>;
+    return MaterialPageRoute(
+      builder: (context) => DashboardScreen(username: args['username']),
+    );
+  } else if (settings.name == '/logs') {
+    final args = settings.arguments;
+    if (args != null && args is Map<String, dynamic>) {
+      return MaterialPageRoute(
+        builder: (context) => LogsScreen(username: args['username']),
+      );
+    } else {
+      return MaterialPageRoute(
+        builder: (context) => const Scaffold(
+          body: Center(child: Text('Missing or invalid arguments for /logs')),
+        ),
+      );
+    }
+  } else if (settings.name == '/settings') {
+    final args = settings.arguments;
+    if (args != null && args is Map<String, dynamic>) {
+      return MaterialPageRoute(
+        builder: (context) => SMSGatewaySettingsScreen(username: args['username']),
+      );
+    } else {
+      return MaterialPageRoute(
+        builder: (context) => const Scaffold(
+          body: Center(child: Text('Missing or invalid arguments for /settings')),
+        ),
+      );
+    }
+  }
 
-        return null;
-      },
+  // Optional: handle unknown routes
+  return MaterialPageRoute(
+    builder: (context) => const Scaffold(
+      body: Center(child: Text('Unknown route')),
+    ),
+  );
+},
+
       debugShowCheckedModeBanner: false,
     );
 
