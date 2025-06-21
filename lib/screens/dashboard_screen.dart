@@ -318,84 +318,78 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   }
 
   @override
-  Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
-    final isTablet = screenSize.width > 600;
-    final padding = isTablet ? 24.0 : 16.0;
-    
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-          ),
+Widget build(BuildContext context) {
+  final screenSize = MediaQuery.of(context).size;
+  final isTablet = screenSize.width > 600;
+  final padding = isTablet ? 24.0 : 16.0;
+  
+  return Scaffold(
+    body: Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
         ),
-        child: SafeArea(
-          child: AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(0, _slideAnimation.value),
-                child: Opacity(
-                  opacity: _fadeAnimation.value,
-                  child: Column(
-                    children: [
-                      CustomAppBar(
-                        activeTab: 'dashboard',
-                        onDashboardTap: () {}, // already here, or navigate
-                        onLogsTap: () => Navigator.pushNamed(
-                                            context,
-                                            '/logs',
-                                            arguments: {'username': widget.username},
-
-                                          ),
-
-                        onSettingsTap: () => Navigator.pushNamed(
-                                context,
-                                '/settings',
-                                arguments: {'username': widget.username},
-                            ),
-                        onLogout: _logout, // your existing logout function
+      ),
+      child: SafeArea(
+        child: AnimatedBuilder(
+          animation: _animationController,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(0, _slideAnimation.value),
+              child: Opacity(
+                opacity: _fadeAnimation.value,
+                child: Column(
+                  children: [
+                    CustomAppBar(
+                      activeTab: 'dashboard',
+                      onDashboardTap: () {},
+                      onLogsTap: () => Navigator.pushNamed(
+                        context,
+                        '/logs',
+                        arguments: {'username': widget.username},
                       ),
-                      Expanded(
-                        child: RefreshIndicator(
-                          onRefresh: () async {
-                            HapticFeedback.lightImpact();
-                            _loadInitialData();
-                            await Future.delayed(const Duration(milliseconds: 500));
-                          },
-                          color: const Color(0xFF667eea),
-                          child: SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: EdgeInsets.all(padding),
-                            child: Column(
-                              children: [
-                                _buildStatsGrid(isTablet),
-                                SizedBox(height: isTablet ? 32 : 20),
-                                if (isTablet) 
-                                  _buildTabletLayout()
-                                else
-                                  _buildMobileLayout(),
-                                // Add bottom padding to prevent content from being hidden behind nav bar
-                                const SizedBox(height: 20),
-                              ],
-                            ),
+                      onSettingsTap: () => Navigator.pushNamed(
+                        context,
+                        '/settings',
+                        arguments: {'username': widget.username},
+                      ),
+                      onLogout: _logout,
+                    ),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () async {
+                          HapticFeedback.lightImpact();
+                          _loadInitialData();
+                          await Future.delayed(const Duration(milliseconds: 500));
+                        },
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.all(padding),
+                          child: Column(
+                            children: [
+                              _buildStatsGrid(isTablet),
+                              SizedBox(height: isTablet ? 32 : 20),
+                              if (isTablet) 
+                                _buildTabletLayout()
+                              else
+                                _buildMobileLayout(),
+                              const SizedBox(height: 8), // Reduced padding
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildAppBar(double padding) {
     return Container(
