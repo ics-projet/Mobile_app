@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/logs_screen.dart';
+import 'screens/sms_gateway_settings_screen.dart';
+
 
 void main() {
   runApp(const SMSGatewayApp());
@@ -301,7 +303,7 @@ class _LoginScreenState extends State<LoginScreen>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => LogsScreen(username: username),
+            builder: (context) => const SMSGatewaySettingsScreen(),
           ),
         );
       } else {
