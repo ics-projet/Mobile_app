@@ -30,6 +30,9 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   bool _isSending = false;
   List<Message> _messages = [];
   
+  // Navigation state
+  int _currentNavIndex = 0; // Dashboard is at index 0
+  
   @override
   void initState() {
     super.initState();
@@ -158,7 +161,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     }
   }
 
-  void _showSnackBar(String message, Color color) {
+  void _showSnackBar(String message, [Color? color]) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -173,11 +176,11 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
             Expanded(child: Text(message)),
           ],
         ),
-        backgroundColor: color,
+        backgroundColor: color ?? const Color(0xFF667eea),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: EdgeInsets.only(
-          bottom: MediaQuery.of(context).size.height * 0.1,
+          bottom: MediaQuery.of(context).size.height * 0.15, // Adjusted for bottom nav
           left: 16,
           right: 16,
         ),
@@ -225,6 +228,90 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     );
   }
 
+  // Navigation handling methods
+  Widget _buildBottomNavigationBar() {
+    return Container(
+      decoration: BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
+      ),
+      child: BottomNavigationBar(
+        currentIndex: _currentNavIndex,
+        onTap: (index) {
+          setState(() {
+            _currentNavIndex = index;
+          });
+          _handleNavigation(index);
+        },
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.white,
+        selectedItemColor: const Color(0xFF667eea),
+        unselectedItemColor: Colors.grey[600],
+        selectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontWeight: FontWeight.w500,
+          fontSize: 11,
+        ),
+        elevation: 0,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.assessment_outlined),
+            activeIcon: Icon(Icons.assessment),
+            label: 'Logs',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings_outlined),
+            activeIcon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.info_outline),
+            activeIcon: Icon(Icons.info),
+            label: 'About',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.logout_outlined),
+            activeIcon: Icon(Icons.logout),
+            label: 'Logout',
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleNavigation(int index) {
+    switch (index) {
+      case 0:
+        // Already on Dashboard, do nothing
+        break;
+      case 1:
+        _showSnackBar('Logs screen - Coming soon!');
+        break;
+      case 2:
+        _showSnackBar('Settings screen - Coming soon!');
+        break;
+      case 3:
+        _showSnackBar('About screen - Coming soon!');
+        break;
+      case 4:
+        _logout();
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
@@ -270,6 +357,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                                   _buildTabletLayout()
                                 else
                                   _buildMobileLayout(),
+                                // Add bottom padding to prevent content from being hidden behind nav bar
+                                const SizedBox(height: 20),
                               ],
                             ),
                           ),
@@ -283,6 +372,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
           ),
         ),
       ),
+      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
@@ -356,18 +446,6 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: _logout,
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.logout, color: Colors.red, size: 18),
-                ),
-              ),
             ],
           ),
         ],
@@ -402,124 +480,124 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     );
   }
 
-    Widget _buildStatsGrid(bool isTablet) {
+  Widget _buildStatsGrid(bool isTablet) {
     final crossAxisCount = isTablet ? 4 : 2;
     // Increased aspect ratio to give more height
     final childAspectRatio = isTablet ? 1.1 : 0.9; // Changed from 1.3 : 1.2
     
     return GridView.count(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisCount: crossAxisCount,
-        crossAxisSpacing: isTablet ? 20 : 16,
-        mainAxisSpacing: isTablet ? 20 : 16,
-        childAspectRatio: childAspectRatio,
-        children: [
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: crossAxisCount,
+      crossAxisSpacing: isTablet ? 20 : 16,
+      mainAxisSpacing: isTablet ? 20 : 16,
+      childAspectRatio: childAspectRatio,
+      children: [
         _buildStatCard(
-            'Sent', // Shortened from 'Messages Sent'
-            _sentCount.toString(),
-            Icons.send_rounded,
-            const LinearGradient(
+          'Sent', // Shortened from 'Messages Sent'
+          _sentCount.toString(),
+          Icons.send_rounded,
+          const LinearGradient(
             colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
-            ),
+          ),
         ),
         _buildStatCard(
-            'Received', // Shortened from 'Messages Received'
-            _receivedCount.toString(),
-            Icons.inbox_rounded,
-            const LinearGradient(
+          'Received', // Shortened from 'Messages Received'
+          _receivedCount.toString(),
+          Icons.inbox_rounded,
+          const LinearGradient(
             colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
-            ),
+          ),
         ),
         _buildStatCard(
-            'Pending', // Shortened from 'Pending Messages'
-            _pendingCount.toString(),
-            Icons.schedule_rounded,
-            const LinearGradient(
+          'Pending', // Shortened from 'Pending Messages'
+          _pendingCount.toString(),
+          Icons.schedule_rounded,
+          const LinearGradient(
             colors: [Color(0xFFfa709a), Color(0xFFfee140)],
-            ),
+          ),
         ),
         _buildStatCard(
-            'Success Rate',
-            '${_calculateSuccessRate()}%',
-            Icons.trending_up_rounded,
-            const LinearGradient(
+          'Success Rate',
+          '${_calculateSuccessRate()}%',
+          Icons.trending_up_rounded,
+          const LinearGradient(
             colors: [Color(0xFFf093fb), Color(0xFFf5576c)],
-            ),
+          ),
         ),
-        ],
+      ],
     );
-    }
+  }
 
-    Widget _buildStatCard(String title, String value, IconData icon, LinearGradient gradient) {
+  Widget _buildStatCard(String title, String value, IconData icon, LinearGradient gradient) {
     return TweenAnimationBuilder<double>(
-        duration: const Duration(milliseconds: 800),
-        tween: Tween(begin: 0.0, end: 1.0),
-        builder: (context, animationValue, child) {
+      duration: const Duration(milliseconds: 800),
+      tween: Tween(begin: 0.0, end: 1.0),
+      builder: (context, animationValue, child) {
         return Transform.scale(
-            scale: 0.8 + (0.2 * animationValue),
-            child: Container(
+          scale: 0.8 + (0.2 * animationValue),
+          child: Container(
             decoration: BoxDecoration(
-                gradient: gradient,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
+              gradient: gradient,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
                 BoxShadow(
-                    color: gradient.colors.first.withOpacity(0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                    spreadRadius: 0,
+                  color: gradient.colors.first.withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                  spreadRadius: 0,
                 ),
-                ],
+              ],
             ),
             child: Material(
-                color: Colors.transparent,
-                child: InkWell(
+              color: Colors.transparent,
+              child: InkWell(
                 borderRadius: BorderRadius.circular(20),
                 onTap: () => HapticFeedback.selectionClick(),
                 child: Padding(
-                    padding: const EdgeInsets.all(16), // Reduced from 20
-                    child: Column(
+                  padding: const EdgeInsets.all(16), // Reduced from 20
+                  child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                        Icon(icon, color: Colors.white, size: 28), // Reduced from 32
-                        const SizedBox(height: 8), // Reduced from 12
-                        Flexible( // Added Flexible wrapper
+                      Icon(icon, color: Colors.white, size: 28), // Reduced from 32
+                      const SizedBox(height: 8), // Reduced from 12
+                      Flexible( // Added Flexible wrapper
                         child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
                             value,
                             style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24, // Reduced from 28
-                                fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 24, // Reduced from 28
+                              fontWeight: FontWeight.bold,
                             ),
-                            ),
+                          ),
                         ),
-                        ),
-                        const SizedBox(height: 4), // Reduced from 6
-                        Flexible( // Added Flexible wrapper for title
+                      ),
+                      const SizedBox(height: 4), // Reduced from 6
+                      Flexible( // Added Flexible wrapper for title
                         child: Text(
-                            title,
-                            style: const TextStyle(
+                          title,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 11, // Reduced from 12
                             fontWeight: FontWeight.w500,
-                            ),
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        ),
+                      ),
                     ],
-                    ),
+                  ),
                 ),
-                ),
+              ),
             ),
-            ),
+          ),
         );
-        },
+      },
     );
-    }
+  }
 
   Widget _buildSendSMSCard() {
     return Container(
@@ -667,131 +745,129 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     );
   }
 
- // Fixed version of the Recent Messages Card header
-
-Widget _buildRecentMessagesCard() {
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(24),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.08),
-          blurRadius: 20,
-          offset: const Offset(0, 8),
-          spreadRadius: 0,
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Fixed header row with proper spacing
-        Row(
-          children: [
-            // Left side with icon and title - flexible to take available space
-            Expanded(
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                      ),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.message_rounded, color: Colors.white, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  const Flexible( // Added Flexible to prevent overflow
-                    child: Text(
-                      'Recent Messages',
-                      style: TextStyle(
-                        fontSize: 18, // Reduced from 20 to give more space
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Right side with refresh button - fixed width
-            const SizedBox(width: 8), // Small spacing
-            Container(
-              width: 40, // Fixed width for button
-              height: 40, // Fixed height for button
-              child: IconButton(
-                onPressed: () {
-                  HapticFeedback.selectionClick();
-                  _loadInitialData();
-                },
-                icon: const Icon(
-                  Icons.refresh_rounded, 
-                  color: Color(0xFF667eea),
-                  size: 20, // Reduced icon size
-                ),
-                tooltip: 'Refresh',
-                style: IconButton.styleFrom(
-                  backgroundColor: const Color(0xFF667eea).withOpacity(0.1),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: EdgeInsets.zero, // Remove default padding
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-        _messages.isEmpty
-            ? Container(
-                padding: const EdgeInsets.all(40),
-                child: Column(
+  Widget _buildRecentMessagesCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Fixed header row with proper spacing
+          Row(
+            children: [
+              // Left side with icon and title - flexible to take available space
+              Expanded(
+                child: Row(
                   children: [
-                    Icon(
-                      Icons.message_outlined,
-                      size: 48,
-                      color: Colors.grey.shade400,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No messages yet',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
                       ),
+                      child: const Icon(Icons.message_rounded, color: Colors.white, size: 20),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Send your first SMS to get started!',
-                      style: TextStyle(
-                        color: Colors.grey.shade500,
-                        fontSize: 14,
+                    const SizedBox(width: 12),
+                    const Flexible( // Added Flexible to prevent overflow
+                      child: Text(
+                        'Recent Messages',
+                        style: TextStyle(
+                          fontSize: 18, // Reduced from 20 to give more space
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
-              )
-            : ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final message = _messages[index];
-                  return _buildMessageItem(message, index);
-                },
               ),
-      ],
-    ),
-  );
-}
+              // Right side with refresh button - fixed width
+              const SizedBox(width: 8), // Small spacing
+              Container(
+                width: 40, // Fixed width for button
+                height: 40, // Fixed height for button
+                child: IconButton(
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    _loadInitialData();
+                  },
+                  icon: const Icon(
+                    Icons.refresh_rounded, 
+                    color: Color(0xFF667eea),
+                    size: 20, // Reduced icon size
+                  ),
+                  tooltip: 'Refresh',
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFF667eea).withOpacity(0.1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: EdgeInsets.zero, // Remove default padding
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _messages.isEmpty
+              ? Container(
+                  padding: const EdgeInsets.all(40),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.message_outlined,
+                        size: 48,
+                        color: Colors.grey.shade400,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No messages yet',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Send your first SMS to get started!',
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _messages.length,
+                  itemBuilder: (context, index) {
+                    final message = _messages[index];
+                    return _buildMessageItem(message, index);
+                  },
+                ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildMessageItem(Message message, int index) {
     return TweenAnimationBuilder<double>(

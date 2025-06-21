@@ -4,7 +4,6 @@ import 'screens/dashboard_screen.dart';
 import 'screens/logs_screen.dart';
 import 'screens/sms_gateway_settings_screen.dart';
 
-
 void main() {
   runApp(const SMSGatewayApp());
 }
@@ -22,6 +21,11 @@ class SMSGatewayApp extends StatelessWidget {
       ),
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
+      // Add named routes for better navigation
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/dashboard': (context) => const DashboardScreen(username: 'User'),
+      },
     );
   }
 }
@@ -298,12 +302,12 @@ class _LoginScreenState extends State<LoginScreen>
       if (_apiKeyController.text.length >= 8) {
         final username = _apiKeyController.text; // Use API key as username for now
 
-        // Navigate to DashboardScreen
+        // Navigate to DashboardScreen - FIXED: Only pass username once
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const SMSGatewaySettingsScreen(),
+            builder: (context) => DashboardScreen(username: username),
           ),
         );
       } else {
@@ -312,11 +316,12 @@ class _LoginScreenState extends State<LoginScreen>
     } catch (error) {
       _showError('Authentication failed. Please try again.');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
-
   }
 
   @override
