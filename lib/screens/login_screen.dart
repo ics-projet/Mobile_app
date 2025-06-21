@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen>
     });
   }
 
-  Future<void> _authenticateUser() async {
+ Future<void> _authenticateUser() async {
   if (!_formKey.currentState!.validate()) return;
 
   setState(() {
@@ -88,12 +88,13 @@ class _LoginScreenState extends State<LoginScreen>
   });
 
   if (result['success']) {
-    // Save the API key
+    // Save the API key - THIS IS WHERE YOU NEED TO ADD IT
     final apiKey = result['data']['api_key'];
     await SessionManager.saveSession(
       accessToken: apiKey, // Using api_key as access token
       refreshToken: '', // No refresh token in your current backend
       username: _usernameController.text.trim(),
+      apiKey: apiKey, // Add this line to store the API key separately
     );
 
     Navigator.pushReplacement(

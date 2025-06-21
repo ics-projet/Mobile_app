@@ -1,3 +1,4 @@
+// lib/services/session_manager.dart
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionManager {
@@ -6,17 +7,20 @@ class SessionManager {
   static const String _usernameKey = 'username';
   static const String _userIdKey = 'user_id';
   static const String _loginTimeKey = 'login_time';
+  static const String _apiKeyKey = 'api_key';
 
   static Future<void> saveSession({
     required String accessToken,
     required String refreshToken,
     required String username,
+    required String apiKey,
     String? userId,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_accessTokenKey, accessToken);
     await prefs.setString(_refreshTokenKey, refreshToken);
     await prefs.setString(_usernameKey, username);
+    await prefs.setString(_apiKeyKey, apiKey);
     if (userId != null) {
       await prefs.setString(_userIdKey, userId);
     }
@@ -31,6 +35,7 @@ class SessionManager {
       'username': prefs.getString(_usernameKey),
       'user_id': prefs.getString(_userIdKey),
       'login_time': prefs.getString(_loginTimeKey),
+      'api_key': prefs.getString(_apiKeyKey),
     };
   }
 
@@ -47,6 +52,7 @@ class SessionManager {
     await prefs.remove(_usernameKey);
     await prefs.remove(_userIdKey);
     await prefs.remove(_loginTimeKey);
+    await prefs.remove(_apiKeyKey);
   }
 
   static Future<bool> isLoggedIn() async {
@@ -68,5 +74,17 @@ class SessionManager {
     
     // Assume token expires after 24 hours (adjust based on your backend)
     return difference.inHours >= 24;
+  }
+
+  // Helper method to get API key
+  static Future<String?> getApiKey() async {
+    final session = await getSession();
+    return session['api_key'];
+  }
+
+  // Helper method to get access token
+  static Future<String?> getAccessToken() async {
+    final session = await getSession();
+    return session['access_token'];
   }
 }

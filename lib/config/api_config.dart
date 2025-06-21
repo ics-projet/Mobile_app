@@ -1,12 +1,36 @@
+// lib/config/api_config.dart
 class ApiConfig {
-  // Option 2: Keep trailing slash in baseUrl
-  static const String baseUrl = 'http://192.168.205.216:8000/'; 
+  // Base URL without trailing slash
+  static const String baseUrl = 'http://192.168.205.216:8000';
+  // Alternative: Use ngrok URL for testing
+  // static const String baseUrl = 'https://abfe-154-121-111-119.ngrok-free.app';
   
-  // Add leading slashes to all endpoints
+  // Endpoints with leading slash
   static const String loginEndpoint = '/login';
   static const String registerEndpoint = '/register';
   static const String refreshTokenEndpoint = '/refresh';
   static const String logoutEndpoint = '/logout';
+  static const String smsEndpoint = '/sms';
+  static const String smsInboxEndpoint = '/sms/inbox';
+  static const String logsEndpoint = '/logs';
   
+  // Timeout configuration
   static const Duration requestTimeout = Duration(seconds: 30);
+  
+  // Helper method to build full URLs
+  static String buildUrl(String endpoint) {
+    return '$baseUrl$endpoint';
+  }
+  
+  // Default headers
+  static Map<String, String> get defaultHeaders => {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+  
+  // Headers with API key
+  static Map<String, String> headersWithApiKey(String apiKey) => {
+    ...defaultHeaders,
+    'api_key': apiKey,
+  };
 }

@@ -2,7 +2,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../components/app_bar.dart'; 
-
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../services/log_service.dart';
+import '../models/sms_log.dart';
+import 'dart:async';
+// lib/screens/logs_screen.dart
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../components/app_bar.dart'; 
+import '../services/api_service.dart';
+import '../services/session_manager.dart';
 class LogsScreen extends StatefulWidget {
   final String username;
   
@@ -96,66 +106,42 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  // Generate mock logs data
-  List<SMSLog> _generateMockLogs() {
-    final logs = <SMSLog>[];
-    final statuses = [LogStatus.sent, LogStatus.failed, LogStatus.pending];
-    final types = [LogType.outbound, LogType.inbound];
-    final phones = ['+1234567890', '+0987654321', '+1122334455', '+5566778899'];
-    final messages = [
-      'Hello, this is a test message',
-      'Your appointment is confirmed for tomorrow',
-      'Thank you for your purchase',
-      'Meeting reminder: 3 PM today',
-      'Your verification code is 123456',
-      'Welcome to our service!',
-      'Payment received successfully',
-      'Order #12345 has been shipped'
-    ];
-
-    for (int i = 0; i < 50; i++) {
-      final date = DateTime.now().subtract(Duration(
-        days: (DateTime.now().millisecond % 30),
-        hours: (DateTime.now().millisecond % 24),
-        minutes: (DateTime.now().millisecond % 60),
-      ));
-      
-      logs.add(SMSLog(
-        id: (i + 1).toString(),
-        phoneNumber: phones[i % phones.length],
-        message: messages[i % messages.length],
-        status: statuses[i % statuses.length],
-        type: types[i % types.length],
-        timestamp: date,
-        deliveryTime: (i % 10) + 1.0,
-      ));
-    }
-
-    return logs..sort((a, b) => b.timestamp.compareTo(a.timestamp));
-  }
-
   Future<void> _loadLogs() async {
-    if (_isLoading) return;
-    
-    setState(() {
-      _isLoading = true;
-    });
+  if (_isLoading) return;
+  
+  setState(() {
+    _isLoading = true;
+  });
 
-    try {
-      // Simulate API call
-      await Future.delayed(const Duration(milliseconds: 800));
-      
-      _allLogs = _generateMockLogs();
-      _applyFilters();
-      _updateStatistics();
-    } catch (e) {
-      _showSnackBar('Error loading logs', Colors.red);
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+  try {
+    final session = await SessionManager.getSession();
+    final apiKey = session['api_key'];
+    
+    if (apiKey == null) {
+      throw Exception('No API key found');
     }
+
+    final result = await ApiService.getCommunicationLogs(apiKey: apiKey);
+    
+    if (result['success']) {
+      setState(() {
+        _allLogs = (result['logs'] as List)
+            .map((log) => SMSLog.fromJson(log))
+            .toList();
+        _applyFilters();
+        _updateStatistics();
+      });
+    } else {
+      _showSnackBar(result['error'], Colors.red);
+    }
+  } catch (e) {
+    _showSnackBar('Error loading logs: ${e.toString()}', Colors.red);
+  } finally {
+    setState(() {
+      _isLoading = false;
+    });
   }
+}
 
   Future<void> _refreshLogs() async {
     if (_isRefreshing) return;
@@ -230,7 +216,7 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
               _buildDetailRow('Status', log.status.name.toUpperCase()),
               _buildDetailRow('Type', log.type.name.toUpperCase()),
               _buildDetailRow('Time', _formatDateTime(log.timestamp)),
-              _buildDetailRow('Delivery Time', '${log.deliveryTime.toStringAsFixed(2)}s'),
+              //_buildDetailRow('Delivery Time', '${log.deliveryTime.toStringAsFixed(2)}s'),
             ],
           ),
         ),
@@ -268,8 +254,16 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
 
   void _exportLogs() {
     HapticFeedback.selectionClick();
-    // Simulate export functionality
-    _showSnackBar('Logs exported successfully!', Colors.green);
+    // TODO: Implement actual export functionality
+    // Example:
+    // try {
+    //   await ExportService.exportLogs(_filteredLogs);
+    //   _showSnackBar('Logs exported successfully!', Colors.green);
+    // } catch (e) {
+    //   _showSnackBar('Export failed: ${e.toString()}', Colors.red);
+    // }
+    
+    _showSnackBar('Export functionality not implemented yet', Colors.orange);
   }
 
   void _showSnackBar(String message, Color color) {
@@ -1349,25 +1343,4 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
 }
 
 // Data Models
-class SMSLog {
-  final String id;
-  final String phoneNumber;
-  final String message;
-  final LogStatus status;
-  final LogType type;
-  final DateTime timestamp;
-  final double deliveryTime;
 
-  SMSLog({
-    required this.id,
-    required this.phoneNumber,
-    required this.message,
-    required this.status,
-    required this.type,
-    required this.timestamp,
-    required this.deliveryTime,
-  });
-}
-
-enum LogStatus { sent, failed, pending }
-enum LogType { outbound, inbound }
