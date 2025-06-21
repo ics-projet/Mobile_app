@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../components/app_bar.dart'; 
+import '../services/log_service.dart';
+import 'dart:async';
 
 class LogsScreen extends StatefulWidget {
   final String username;
@@ -43,6 +45,8 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
   int _successfulMessages = 0;
   int _failedMessages = 0;
   double _successRate = 0.0;
+
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -93,11 +97,12 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
     _pulseController.dispose();
     _searchController.dispose();
     _scrollController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
   // Generate mock logs data
-  List<SMSLog> _generateMockLogs() {
+ /* List<SMSLog> _generateMockLogs() {
     final logs = <SMSLog>[];
     final statuses = [LogStatus.sent, LogStatus.failed, LogStatus.pending];
     final types = [LogType.outbound, LogType.inbound];
@@ -132,30 +137,40 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
     }
 
     return logs..sort((a, b) => b.timestamp.compareTo(a.timestamp));
-  }
+  }  */
 
-  Future<void> _loadLogs() async {
-    if (_isLoading) return;
+Future<void> _loadLogs() async {
+  if (_isLoading) return;
+  
+  setState(() {
+    _isLoading = true;
+  });
+
+  try {
+    // Call the real API instead of generating mock data
+    _allLogs = await LogService.fetchLogs(
+      dateFrom: _dateFrom,
+      dateTo: _dateTo,
+      status: _statusFilter.isNotEmpty ? _statusFilter : null,
+      type: _typeFilter.isNotEmpty ? _typeFilter : null,
+      search: _searchController.text.isNotEmpty ? _searchController.text : null,
+    );
     
+    _applyFilters();
+    _updateStatistics();
+  } catch (e) {
+    _showSnackBar('Error loading logs: ${e.toString()}', Colors.red);
+    
+    // Fallback to mock data if API fails (optional - remove in production)
+  //  _allLogs = _generateMockLogs();
+    _applyFilters();
+    _updateStatistics();
+  } finally {
     setState(() {
-      _isLoading = true;
+      _isLoading = false;
     });
-
-    try {
-      // Simulate API call
-      await Future.delayed(const Duration(milliseconds: 800));
-      
-      _allLogs = _generateMockLogs();
-      _applyFilters();
-      _updateStatistics();
-    } catch (e) {
-      _showSnackBar('Error loading logs', Colors.red);
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
   }
+}
 
   Future<void> _refreshLogs() async {
     if (_isRefreshing) return;
@@ -172,33 +187,27 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
     });
   }
 
-  void _applyFilters() {
-    _filteredLogs = _allLogs.where((log) {
-      // Date filter
-      if (_dateFrom != null && log.timestamp.isBefore(_dateFrom!)) return false;
-      if (_dateTo != null && log.timestamp.isAfter(_dateTo!.add(const Duration(days: 1)))) return false;
-      
-      // Status filter
-      if (_statusFilter.isNotEmpty && log.status.name != _statusFilter) return false;
-      
-      // Type filter
-      if (_typeFilter.isNotEmpty && log.type.name != _typeFilter) return false;
-      
-      // Search filter
-      final searchTerm = _searchController.text.toLowerCase();
-      if (searchTerm.isNotEmpty &&
-          !log.phoneNumber.toLowerCase().contains(searchTerm) &&
-          !log.message.toLowerCase().contains(searchTerm)) {
-        return false;
-      }
-      
-      return true;
-    }).toList();
+void _applyFilters() {
+  _filteredLogs = _allLogs.where((log) {
+    // Search filter (since date, status, type are already filtered by API)
+    final searchTerm = _searchController.text.toLowerCase();
+    if (searchTerm.isNotEmpty &&
+        !log.phoneNumber.toLowerCase().contains(searchTerm) &&
+        !log.message.toLowerCase().contains(searchTerm)) {
+      return false;
+    }
+    
+    return true;
+  }).toList();
 
-    _currentPage = 1;
-    _updateStatistics();
-    setState(() {});
-  }
+  _currentPage = 1;
+  _updateStatistics();
+  setState(() {});
+}
+
+Future<void> _applyFiltersWithReload() async {
+  await _loadLogs(); // This will fetch filtered data from API
+}
 
   void _updateStatistics() {
     _totalMessages = _filteredLogs.length;
@@ -206,6 +215,13 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
     _failedMessages = _filteredLogs.where((log) => log.status == LogStatus.failed).length;
     _successRate = _totalMessages > 0 ? (_successfulMessages / _totalMessages) * 100 : 0.0;
   }
+
+  void _debounceSearch() {
+  if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+  _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+    _applyFiltersWithReload();
+  });
+}
 
   void _showLogDetails(SMSLog log) {
     HapticFeedback.selectionClick();
@@ -687,43 +703,46 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildSearchField() {
-    return TextField(
-      controller: _searchController,
-      decoration: InputDecoration(
-        labelText: 'Search',
-        hintText: 'Search messages or phone numbers...',
-        prefixIcon: const Icon(Icons.search),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        filled: true,
-        fillColor: Colors.grey.shade50,
+Widget _buildSearchField() {
+  return TextField(
+    controller: _searchController,
+    decoration: InputDecoration(
+      labelText: 'Search',
+      hintText: 'Search messages or phone numbers...',
+      prefixIcon: const Icon(Icons.search),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: Colors.grey.shade300),
       ),
-      onChanged: (value) => _applyFilters(),
-    );
-  }
+      filled: true,
+      fillColor: Colors.grey.shade50,
+    ),
+    onChanged: (value) {
+      // Debounce the search to avoid too many API calls
+      _debounceSearch();
+    },
+  );
+}
 
-  Widget _buildFilterButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: () {
-          HapticFeedback.selectionClick();
-          _applyFilters();
-        },
-        icon: const Icon(Icons.filter_list, size: 18),
-        label: const Text('Apply Filters'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF667eea),
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
+Widget _buildFilterButton() {
+  return SizedBox(
+    width: double.infinity,
+    child: ElevatedButton.icon(
+      onPressed: () {
+        HapticFeedback.selectionClick();
+        _applyFiltersWithReload(); // Changed from _applyFilters()
+      },
+      icon: const Icon(Icons.filter_list, size: 18),
+      label: const Text('Apply Filters'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF667eea),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildStatsGrid(bool isTablet) {
     return GridView.count(
@@ -1349,7 +1368,7 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
 }
 
 // Data Models
-class SMSLog {
+/*class SMSLog {
   final String id;
   final String phoneNumber;
   final String message;
@@ -1369,5 +1388,5 @@ class SMSLog {
   });
 }
 
-enum LogStatus { sent, failed, pending }
-enum LogType { outbound, inbound }
+enum LogStatus { sent, failed, pending } 
+enum LogType { outbound, inbound }*/
