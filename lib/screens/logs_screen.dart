@@ -48,6 +48,7 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     
+    final String username = widget.username;
     // Initialize animations
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
@@ -363,13 +364,18 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
                   opacity: _fadeAnimation.value,
                   child: Column(
                     children: [
-                      CustomAppBar(
-                        activeTab: 'logs',
-                        onDashboardTap: () {}, // to change 
-                        onLogsTap:  () {}, // already here
-                        onSettingsTap: () => Navigator.pushNamed(context, '/settings'),
-                        onLogout: _logout, // your existing logout function
-                      ),
+                            CustomAppBar(
+                            activeTab: 'logs',
+                            onDashboardTap: () => Navigator.pushNamed(
+                                context,
+                                '/dashboard',
+                                arguments: {'username': widget.username},
+                            ),
+                            onLogsTap: () {}, // already active
+                            onSettingsTap: () => Navigator.pushNamed(context, '/settings'),
+                            onLogout: _logout, // your existing logout function
+                            ),
+
                       Expanded(
                         child: RefreshIndicator(
                           onRefresh: _refreshLogs,
