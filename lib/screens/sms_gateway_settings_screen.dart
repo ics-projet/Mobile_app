@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../components/app_bar.dart'; 
 
 class SMSGatewaySettingsScreen extends StatefulWidget {
-  const SMSGatewaySettingsScreen({Key? key}) : super(key: key);
+  final String username;
+
+  const SMSGatewaySettingsScreen({
+    Key? key,
+    required this.username,
+  }) : super(key: key);
 
   @override
   State<SMSGatewaySettingsScreen> createState() => _SMSGatewaySettingsScreenState();
@@ -11,7 +17,6 @@ class SMSGatewaySettingsScreen extends StatefulWidget {
 class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  int _currentNavIndex = 2; // Settings tab is selected
   
   // General Settings
   final TextEditingController _deviceNameController = TextEditingController(text: 'SMS Gateway #1');
@@ -55,6 +60,7 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
   @override
   void initState() {
     super.initState();
+    final String username = widget.username;
     _tabController = TabController(length: 5, vsync: this);
   }
 
@@ -93,26 +99,40 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
         child: SafeArea(
           child: Column(
             children: [
-              _buildHeader(),
+                  CustomAppBar(
+                            activeTab: 'settings',
+                            onDashboardTap: () => Navigator.pushNamed(
+                                context,
+                                '/dashboard',
+                                arguments: {'username': widget.username},
+                            ),
+                            onLogsTap: () => Navigator.pushNamed(
+                                            context,
+                                            '/logs',
+                                            arguments: {'username': widget.username},
+
+                                          ),
+                            onSettingsTap: () {},
+                            onLogout: _logout, // your existing logout function
+                            ),
+
               Expanded(
                 child: Container(
-                  margin: const EdgeInsets.fromLTRB(4, 4, 4, 0),
+                  margin: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.95),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                    ),
+                    borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.1),
                         blurRadius: 20,
-                        offset: const Offset(0, -5),
+                        offset: const Offset(0, 10),
                       ),
                     ],
                   ),
                   child: Column(
                     children: [
+                      _buildHeader(),
                       _buildTabBar(),
                       Expanded(
                         child: TabBarView(
@@ -134,494 +154,758 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+    );
+  }
+
+
+  Widget _buildNavButton(String text, VoidCallback onPressed) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.black87, fontSize: 14),
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  Widget _buildActiveNavButton(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF667eea),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 14),
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return ElevatedButton(
+      onPressed: _logout,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFFe74c3c),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      ),
+      child: const Text(
+        '🚪 Logout',
+        style: TextStyle(color: Colors.white, fontSize: 14),
+        overflow: TextOverflow.ellipsis,
+      ),
     );
   }
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '📱 SMS Gateway',
+            '⚙️ Settings & Configuration',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Colors.black87,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 8),
           Text(
-            '⚙️ Settings & Configuration',
+            'Configure your SMS gateway settings and preferences',
             style: TextStyle(
               fontSize: 16,
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.grey[600],
             ),
           ),
         ],
       ),
     );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return Container(
-      decoration: BoxDecoration(
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: BottomNavigationBar(
-        currentIndex: _currentNavIndex,
-        onTap: (index) {
-          setState(() {
-            _currentNavIndex = index;
-          });
-          _handleNavigation(index);
-        },
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF667eea),
-        unselectedItemColor: Colors.grey[600],
-        selectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w500,
-          fontSize: 11,
-        ),
-        elevation: 0,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assessment_outlined),
-            activeIcon: Icon(Icons.assessment),
-            label: 'Logs',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.info_outline),
-            activeIcon: Icon(Icons.info),
-            label: 'About',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.logout_outlined),
-            activeIcon: Icon(Icons.logout),
-            label: 'Logout',
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _handleNavigation(int index) {
-    switch (index) {
-      case 0:
-        _showSnackBar('Dashboard selected');
-        break;
-      case 1:
-        _showSnackBar('Logs selected');
-        break;
-      case 2:
-        // Already on settings, do nothing
-        break;
-      case 3:
-        _showSnackBar('About selected');
-        break;
-      case 4:
-        _logout();
-        break;
-    }
   }
 
   Widget _buildTabBar() {
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: TabBar(
-        controller: _tabController,
-        labelColor: Colors.white,
-        unselectedLabelColor: Colors.black87,
-        isScrollable: true,
-        tabAlignment: TabAlignment.start,
-        indicator: BoxDecoration(
-          color: const Color(0xFF667eea),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-        labelPadding: const EdgeInsets.symmetric(horizontal: 16),
-        tabs: const [
-          Tab(text: '🔧 General'),
-          Tab(text: '🔑 API'),
-          Tab(text: '📡 GSM'),
-          Tab(text: '🔗 Webhooks'),
-          Tab(text: '⚡ Advanced'),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return TabBar(
+            controller: _tabController,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.black87,
+            isScrollable: constraints.maxWidth < 600,
+            indicator: BoxDecoration(
+              color: const Color(0xFF667eea),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            unselectedLabelStyle: const TextStyle(fontSize: 12),
+            tabs: const [
+              Tab(text: '🔧 General'),
+              Tab(text: '🔑 API'),
+              Tab(text: '📡 GSM'),
+              Tab(text: '🔗 Webhooks'),
+              Tab(text: '⚡ Advanced'),
+            ],
+          );
+        },
       ),
     );
   }
 
   Widget _buildGeneralTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _buildCard(
-            '🔧 General Configuration',
-            Column(
-              children: [
-                _buildTextField('Device Name', _deviceNameController),
-                _buildDropdown('Timezone', _selectedTimezone, [
-                  'UTC',
-                  'America/New_York',
-                  'America/Chicago',
-                  'America/Denver',
-                  'America/Los_Angeles',
-                  'Europe/London',
-                  'Europe/Paris',
-                  'Asia/Tokyo',
-                ], (value) => setState(() => _selectedTimezone = value!)),
-                _buildSwitch('Enable Auto-Responses', _autoResponses, (value) => setState(() => _autoResponses = value)),
-                _buildTextField('Auto-Response Message', _autoResponseController, maxLines: 3),
-                const SizedBox(height: 16),
-                _buildButton('💾 Save General Settings', () => _showSnackBar('General settings saved successfully!')),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildCard(
-            '📊 System Status',
-            Column(
+      padding: const EdgeInsets.all(20),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 800) {
+            return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildStatusIndicator('🟢 System Online', true),
-                const SizedBox(height: 16),
-                const Text('System Information:', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                _buildInfoRow('Uptime:', '2 days, 14 hours'),
-                _buildInfoRow('Memory Usage:', '45%'),
-                _buildInfoRow('Storage:', '1.2GB / 4GB'),
-                _buildInfoRow('Version:', 'v1.0.0'),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(child: _buildSecondaryButton('🔄 Restart', () => _showSnackBar('System restart initiated...'))),
-                    const SizedBox(width: 8),
-                    Expanded(child: _buildSuccessButton('📥 Updates', () => _showSnackBar('Checking for updates...'))),
-                  ],
+                Expanded(
+                  child: _buildCard(
+                    '🔧 General Configuration',
+                    Column(
+                      children: [
+                        _buildTextField('Device Name', _deviceNameController),
+                        _buildDropdown('Timezone', _selectedTimezone, [
+                          'UTC',
+                          'America/New_York',
+                          'America/Chicago',
+                          'America/Denver',
+                          'America/Los_Angeles',
+                          'Europe/London',
+                          'Europe/Paris',
+                          'Asia/Tokyo',
+                        ], (value) => setState(() => _selectedTimezone = value!)),
+                        _buildSwitch('Enable Auto-Responses', _autoResponses, (value) => setState(() => _autoResponses = value)),
+                        _buildTextField('Auto-Response Message', _autoResponseController, maxLines: 3),
+                        const SizedBox(height: 16),
+                        _buildButton('💾 Save General Settings', () => _showSnackBar('General settings saved successfully!')),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: _buildCard(
+                    '📊 System Status',
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildStatusIndicator('🟢 System Online', true),
+                        const SizedBox(height: 16),
+                        const Text('System Information:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        _buildInfoRow('Uptime:', '2 days, 14 hours'),
+                        _buildInfoRow('Memory Usage:', '45%'),
+                        _buildInfoRow('Storage:', '1.2GB / 4GB'),
+                        _buildInfoRow('Version:', 'v1.0.0'),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(child: _buildSecondaryButton('🔄 Restart', () => _showSnackBar('System restart initiated...'))),
+                            const SizedBox(width: 8),
+                            Expanded(child: _buildSuccessButton('📥 Updates', () => _showSnackBar('Checking for updates...'))),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
-            ),
-          ),
-        ],
+            );
+          } else {
+            return Column(
+              children: [
+                _buildCard(
+                  '🔧 General Configuration',
+                  Column(
+                    children: [
+                      _buildTextField('Device Name', _deviceNameController),
+                      _buildDropdown('Timezone', _selectedTimezone, [
+                        'UTC',
+                        'America/New_York',
+                        'America/Chicago',
+                        'America/Denver',
+                        'America/Los_Angeles',
+                        'Europe/London',
+                        'Europe/Paris',
+                        'Asia/Tokyo',
+                      ], (value) => setState(() => _selectedTimezone = value!)),
+                      _buildSwitch('Enable Auto-Responses', _autoResponses, (value) => setState(() => _autoResponses = value)),
+                      _buildTextField('Auto-Response Message', _autoResponseController, maxLines: 3),
+                      const SizedBox(height: 16),
+                      _buildButton('💾 Save General Settings', () => _showSnackBar('General settings saved successfully!')),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildCard(
+                  '📊 System Status',
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildStatusIndicator('🟢 System Online', true),
+                      const SizedBox(height: 16),
+                      const Text('System Information:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      _buildInfoRow('Uptime:', '2 days, 14 hours'),
+                      _buildInfoRow('Memory Usage:', '45%'),
+                      _buildInfoRow('Storage:', '1.2GB / 4GB'),
+                      _buildInfoRow('Version:', 'v1.0.0'),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(child: _buildSecondaryButton('🔄 Restart', () => _showSnackBar('System restart initiated...'))),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildSuccessButton('📥 Updates', () => _showSnackBar('Checking for updates...'))),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }
+        },
       ),
     );
   }
 
   Widget _buildApiTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _buildCard(
-            '🔑 API Keys Management',
-            Column(
+      padding: const EdgeInsets.all(20),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 800) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Primary API Key', style: TextStyle(fontWeight: FontWeight.w500)),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      initialValue: _apiKey,
-                      obscureText: !_showApiKey,
-                      readOnly: true,
-                      style: const TextStyle(fontFamily: 'monospace'),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
+                Expanded(
+                  child: _buildCard(
+                    '🔑 API Keys Management',
+                    Column(
                       children: [
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            onPressed: _copyApiKey,
-                            icon: const Icon(Icons.copy, size: 16),
-                            label: const Text('Copy', style: TextStyle(fontSize: 12)),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF6c757d),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Primary API Key', style: TextStyle(fontWeight: FontWeight.w500)),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: _apiKey,
+                                    obscureText: !_showApiKey,
+                                    readOnly: true,
+                                    style: const TextStyle(fontFamily: 'monospace'),
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      fillColor: Colors.grey[100],
+                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  onPressed: _copyApiKey,
+                                  icon: const Icon(Icons.copy, size: 20),
+                                  tooltip: 'Copy',
+                                ),
+                                ElevatedButton(
+                                  onPressed: _regenerateApiKey,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFe74c3c),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  ),
+                                  child: const Text('🔄 Regenerate', style: TextStyle(color: Colors.white, fontSize: 12)),
+                                ),
+                              ],
                             ),
-                          ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _regenerateApiKey,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFe74c3c),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                            ),
-                            child: const Text('🔄 Regenerate', style: TextStyle(fontSize: 12)),
-                          ),
-                        ),
+                        const SizedBox(height: 16),
+                        _buildSwitch('Enable API Rate Limiting', _rateLimiting, (value) => setState(() => _rateLimiting = value)),
+                        _buildTextField('Rate Limit (requests per minute)', _rateLimitController, keyboardType: TextInputType.number),
+                        _buildTextField('Allowed IP Addresses', _allowedIPsController, maxLines: 3),
+                        const SizedBox(height: 16),
+                        _buildButton('💾 Save API Settings', () => _showSnackBar('API settings saved successfully!')),
                       ],
                     ),
-                  ],
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: _buildCard(
+                    '🔐 Security Settings',
+                    Column(
+                      children: [
+                        _buildSwitch('Enable HTTPS Only', _httpsOnly, (value) => setState(() => _httpsOnly = value)),
+                        _buildSwitch('Enable Request Logging', _requestLogging, (value) => setState(() => _requestLogging = value)),
+                        _buildTextField('Session Timeout (minutes)', _sessionTimeoutController, keyboardType: TextInputType.number),
+                        _buildTextField('Max Login Attempts', _maxLoginAttemptsController, keyboardType: TextInputType.number),
+                        const SizedBox(height: 16),
+                        _buildButton('🔒 Save Security Settings', () => _showSnackBar('Security settings saved successfully!')),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          } else {
+            return Column(
+              children: [
+                _buildCard(
+                  '🔑 API Keys Management',
+                  Column(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Primary API Key', style: TextStyle(fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            initialValue: _apiKey,
+                            obscureText: !_showApiKey,
+                            readOnly: true,
+                            style: const TextStyle(fontFamily: 'monospace'),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: _copyApiKey,
+                                  icon: const Icon(Icons.copy, size: 16),
+                                  label: const Text('Copy', style: TextStyle(fontSize: 12)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF6c757d),
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: _regenerateApiKey,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFe74c3c),
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                  ),
+                                  child: const Text('🔄 Regenerate', style: TextStyle(color: Colors.white, fontSize: 12)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildSwitch('Enable API Rate Limiting', _rateLimiting, (value) => setState(() => _rateLimiting = value)),
+                      _buildTextField('Rate Limit (requests per minute)', _rateLimitController, keyboardType: TextInputType.number),
+                      _buildTextField('Allowed IP Addresses', _allowedIPsController, maxLines: 3),
+                      const SizedBox(height: 16),
+                      _buildButton('💾 Save API Settings', () => _showSnackBar('API settings saved successfully!')),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
-                _buildSwitch('Enable API Rate Limiting', _rateLimiting, (value) => setState(() => _rateLimiting = value)),
-                _buildTextField('Rate Limit (requests per minute)', _rateLimitController, keyboardType: TextInputType.number),
-                _buildTextField('Allowed IP Addresses', _allowedIPsController, maxLines: 3),
-                const SizedBox(height: 16),
-                _buildButton('💾 Save API Settings', () => _showSnackBar('API settings saved successfully!')),
+                _buildCard(
+                  '🔐 Security Settings',
+                  Column(
+                    children: [
+                      _buildSwitch('Enable HTTPS Only', _httpsOnly, (value) => setState(() => _httpsOnly = value)),
+                      _buildSwitch('Enable Request Logging', _requestLogging, (value) => setState(() => _requestLogging = value)),
+                      _buildTextField('Session Timeout (minutes)', _sessionTimeoutController, keyboardType: TextInputType.number),
+                      _buildTextField('Max Login Attempts', _maxLoginAttemptsController, keyboardType: TextInputType.number),
+                      const SizedBox(height: 16),
+                      _buildButton('🔒 Save Security Settings', () => _showSnackBar('Security settings saved successfully!')),
+                    ],
+                  ),
+                ),
               ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildCard(
-            '🔐 Security Settings',
-            Column(
-              children: [
-                _buildSwitch('Enable HTTPS Only', _httpsOnly, (value) => setState(() => _httpsOnly = value)),
-                _buildSwitch('Enable Request Logging', _requestLogging, (value) => setState(() => _requestLogging = value)),
-                _buildTextField('Session Timeout (minutes)', _sessionTimeoutController, keyboardType: TextInputType.number),
-                _buildTextField('Max Login Attempts', _maxLoginAttemptsController, keyboardType: TextInputType.number),
-                const SizedBox(height: 16),
-                _buildButton('🔒 Save Security Settings', () => _showSnackBar('Security settings saved successfully!')),
-              ],
-            ),
-          ),
-        ],
+            );
+          }
+        },
       ),
     );
   }
 
   Widget _buildGsmTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _buildCard(
-            '📡 GSM Module Configuration',
-            Column(
-              children: [
-                _buildStatusIndicator('📶 GSM Connected - Signal: 85%', true),
-                const SizedBox(height: 16),
-                _buildDropdown('GSM Module Type', _gsmModule, ['SIM800L', 'SIM900', 'A6', 'SIM7600'], (value) => setState(() => _gsmModule = value!)),
-                _buildDropdown('Baud Rate', _baudRate, ['9600', '19200', '38400', '57600', '115200'], (value) => setState(() => _baudRate = value!)),
-                _buildTextField('Serial Port', _serialPortController),
-                _buildTextField('SIM PIN (if required)', _simPinController, obscureText: true),
-                _buildSwitch('Auto-Reconnect on Failure', _autoReconnect, (value) => setState(() => _autoReconnect = value)),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(child: _buildButton('📡 Save GSM Settings', () => _showSnackBar('GSM settings saved successfully!'))),
-                    const SizedBox(width: 8),
-                    Expanded(child: _buildSecondaryButton('🔧 Test Connection', () => _showSnackBar('GSM Connection Test: SUCCESS'))),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildCard(
-            '📋 GSM Diagnostics',
-            Column(
+      padding: const EdgeInsets.all(20),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 800) {
+            return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Current Status:', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                _buildInfoRow('Network:', 'Connected'),
-                _buildInfoRow('Signal Strength:', '85%'),
-                _buildInfoRow('Operator:', 'Verizon'),
-                _buildInfoRow('SMS Center:', '+1234567890'),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(child: _buildSecondaryButton('🔄 Refresh', () => _showSnackBar('GSM status refreshed!'))),
-                    const SizedBox(width: 8),
-                    Expanded(child: _buildSuccessButton('📤 Test SMS', () => _showSnackBar('Test SMS sent successfully!'))),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWebhooksTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildCard(
-            '🔗 Webhook Configuration',
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSwitch('Enable Webhooks', _enableWebhooks, (value) => setState(() => _enableWebhooks = value)),
-                if (_enableWebhooks) ...[
-                  _buildTextField('Webhook URL', _webhookUrlController),
-                  _buildTextField('Webhook Secret', _webhookSecretController, obscureText: true),
-                  const SizedBox(height: 8),
-                  const Text('Webhook Events:', style: TextStyle(fontWeight: FontWeight.w500)),
-                  _buildCheckbox('SMS Sent Successfully', _webhookSent, (value) => setState(() => _webhookSent = value!)),
-                  _buildCheckbox('SMS Received', _webhookReceived, (value) => setState(() => _webhookReceived = value!)),
-                  _buildCheckbox('SMS Failed', _webhookFailed, (value) => setState(() => _webhookFailed = value!)),
-                  _buildCheckbox('Status Changes', _webhookStatus, (value) => setState(() => _webhookStatus = value!)),
-                  const SizedBox(height: 16),
-                  _buildSecondaryButton('🧪 Test Webhook', () => _showSnackBar('Webhook Test: SUCCESS - HTTP 200 OK received')),
-                ],
-                const SizedBox(height: 16),
-                _buildButton('🔗 Save Webhook Settings', () => _showSnackBar('Webhook settings saved successfully!')),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildCard(
-            '🔌 External Integrations',
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildIntegrationItem('Google Calendar Integration', '🔗 Connect Google Calendar', 'Send SMS reminders for calendar events'),
-                _buildIntegrationItem('Zapier Integration', '🔗 Connect Zapier', 'Automate SMS workflows with 3000+ apps'),
-                const Text('WhatsApp API', style: TextStyle(fontWeight: FontWeight.w500)),
-                const SizedBox(height: 8),
-                TextFormField(
-                  decoration: InputDecoration(
-                    hintText: 'WhatsApp API Token',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: Colors.grey.withOpacity(0.5), width: 2),
+                Expanded(
+                  child: _buildCard(
+                    '📡 GSM Module Configuration',
+                    Column(
+                      children: [
+                        _buildStatusIndicator('📶 GSM Connected - Signal: 85%', true),
+                        const SizedBox(height: 16),
+                        _buildDropdown('GSM Module Type', _gsmModule, ['SIM800L', 'SIM900', 'A6', 'SIM7600'], (value) => setState(() => _gsmModule = value!)),
+                        _buildDropdown('Baud Rate', _baudRate, ['9600', '19200', '38400', '57600', '115200'], (value) => setState(() => _baudRate = value!)),
+                        _buildTextField('Serial Port', _serialPortController),
+                        _buildTextField('SIM PIN (if required)', _simPinController, obscureText: true),
+                        _buildSwitch('Auto-Reconnect on Failure', _autoReconnect, (value) => setState(() => _autoReconnect = value)),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(child: _buildButton('📡 Save GSM Settings', () => _showSnackBar('GSM settings saved successfully!'))),
+                            const SizedBox(width: 8),
+                            Expanded(child: _buildSecondaryButton('🔧 Test Connection', () => _showSnackBar('GSM Connection Test: SUCCESS'))),
+                          ],
+                        ),
+                      ],
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFF667eea), width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                   ),
                 ),
-                const SizedBox(height: 8),
-                _buildSecondaryButton('🔗 Connect WhatsApp', () => _showSnackBar('WhatsApp integration configured!')),
-                const SizedBox(height: 4),
-                Text('Bridge SMS and WhatsApp messages', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAdvancedTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          _buildCard(
-            '⚡ Advanced Configuration',
-            Column(
-              children: [
-                _buildTextField('Max Retry Attempts', _maxRetriesController, keyboardType: TextInputType.number),
-                _buildTextField('Retry Delay (seconds)', _retryDelayController, keyboardType: TextInputType.number),
-                _buildTextField('Message Queue Size', _queueSizeController, keyboardType: TextInputType.number),
-                const SizedBox(height: 16),
-                _buildButton('⚡ Save Advanced Settings', () => _showSnackBar('Advanced settings saved successfully!')),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildCard(
-            '🗂️ Data Management',
-            Column(
-              children: [
-                _buildTextField('Data Retention (days)', _dataRetentionController, keyboardType: TextInputType.number),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(child: _buildSuccessButton('📥 Export Data', () => _showSnackBar('Data export started...'))),
-                    const SizedBox(width: 8),
-                    Expanded(child: _buildSecondaryButton('📤 Import Data', () => _showSnackBar('Import functionality triggered'))),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.only(top: 16),
-                  decoration: BoxDecoration(
-                    border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1)),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: _buildCard(
+                    '📋 GSM Diagnostics',
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Current Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        _buildInfoRow('Network:', 'Connected'),
+                        _buildInfoRow('Signal Strength:', '85%'),
+                        _buildInfoRow('Operator:', 'Verizon'),
+                        _buildInfoRow('SMS Center:', '+1234567890'),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(child: _buildSecondaryButton('🔄 Refresh', () => _showSnackBar('GSM status refreshed!'))),
+                            const SizedBox(width: 8),
+                            Expanded(child: _buildSuccessButton('📤 Test SMS', () => _showSnackBar('Test SMS sent successfully!'))),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Column(
+                ),
+              ],
+            );
+          } else {
+            return Column(
+              children: [
+                _buildCard(
+                  '📡 GSM Module Configuration',
+                  Column(
                     children: [
-                      const Text('⚠️ Danger Zone', style: TextStyle(color: Color(0xFFe74c3c), fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(height: 12),
+                      _buildStatusIndicator('📶 GSM Connected - Signal: 85%', true),
+                      const SizedBox(height: 16),
+                      _buildDropdown('GSM Module Type', _gsmModule, ['SIM800L', 'SIM900', 'A6', 'SIM7600'], (value) => setState(() => _gsmModule = value!)),
+                      _buildDropdown('Baud Rate', _baudRate, ['9600', '19200', '38400', '57600', '115200'], (value) => setState(() => _baudRate = value!)),
+                      _buildTextField('Serial Port', _serialPortController),
+                      _buildTextField('SIM PIN (if required)', _simPinController, obscureText: true),
+                      _buildSwitch('Auto-Reconnect on Failure', _autoReconnect, (value) => setState(() => _autoReconnect = value)),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
-                          Expanded(child: _buildDangerButton('🗑️ Clear All Data', () => _confirmDangerousAction('clear all data'))),
+                          Expanded(child: _buildButton('📡 Save GSM Settings', () => _showSnackBar('GSM settings saved successfully!'))),
                           const SizedBox(width: 8),
-                          Expanded(child: _buildDangerButton('🔄 Factory Reset', () => _confirmDangerousAction('perform factory reset'))),
+                          Expanded(child: _buildSecondaryButton('🔧 Test Connection', () => _showSnackBar('GSM Connection Test: SUCCESS'))),
                         ],
                       ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildCard(
+                  '📋 GSM Diagnostics',
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Current Status:', style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
-                      Text('These actions cannot be undone!', style: TextStyle(fontSize: 12, color: Colors.grey[600], fontStyle: FontStyle.italic)),
+                      _buildInfoRow('Network:', 'Connected'),
+                      _buildInfoRow('Signal Strength:', '85%'),
+                      _buildInfoRow('Operator:', 'Verizon'),
+                      _buildInfoRow('SMS Center:', '+1234567890'),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(child: _buildSecondaryButton('🔄 Refresh', () => _showSnackBar('GSM status refreshed!'))),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildSuccessButton('📤 Test SMS', () => _showSnackBar('Test SMS sent successfully!'))),
+                        ],
+                      ),
                     ],
                   ),
                 ),
               ],
-            ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+Widget _buildWebhooksTab() {
+  return SingleChildScrollView(
+    padding: const EdgeInsets.all(20),
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final webhookSection = _buildCard(
+          '🔗 Webhook Configuration',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSwitch('Enable Webhooks', _enableWebhooks, (value) => setState(() => _enableWebhooks = value)),
+              if (_enableWebhooks) ...[
+                _buildTextField('Webhook URL', _webhookUrlController),
+                _buildTextField('Webhook Secret', _webhookSecretController, obscureText: true),
+                const SizedBox(height: 8),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Webhook Events:', style: TextStyle(fontWeight: FontWeight.w500)),
+                ),
+                _buildCheckbox('SMS Sent Successfully', _webhookSent, (value) => setState(() => _webhookSent = value!)),
+                _buildCheckbox('SMS Received', _webhookReceived, (value) => setState(() => _webhookReceived = value!)),
+                _buildCheckbox('SMS Failed', _webhookFailed, (value) => setState(() => _webhookFailed = value!)),
+                _buildCheckbox('Status Changes', _webhookStatus, (value) => setState(() => _webhookStatus = value!)),
+                const SizedBox(height: 16),
+                _buildSecondaryButton('🧪 Test Webhook', () => _showSnackBar('Webhook Test: SUCCESS - HTTP 200 OK received')),
+              ],
+              const SizedBox(height: 16),
+              _buildButton('🔗 Save Webhook Settings', () => _showSnackBar('Webhook settings saved successfully!')),
+            ],
           ),
-        ],
+        );
+
+        final integrationsSection = _buildCard(
+          '🔌 External Integrations',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildIntegrationItem('Google Calendar Integration', '🔗 Connect Google Calendar', 'Send SMS reminders for calendar events'),
+              _buildIntegrationItem('Zapier Integration', '🔗 Connect Zapier', 'Automate SMS workflows with 3000+ apps'),
+              const Text('WhatsApp API', style: TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              TextFormField(
+                decoration: InputDecoration(
+                  hintText: 'WhatsApp API Token',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.grey.withOpacity(0.5), width: 2),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFF667eea), width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildSecondaryButton('🔗 Connect WhatsApp', () => _showSnackBar('WhatsApp integration configured!')),
+              const SizedBox(height: 4),
+              Text('Bridge SMS and WhatsApp messages', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+            ],
+          ),
+        );
+
+        if (constraints.maxWidth > 800) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: webhookSection),
+              const SizedBox(width: 20),
+              Expanded(child: integrationsSection),
+            ],
+          );
+        } else {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              webhookSection,
+              const SizedBox(height: 20),
+              integrationsSection,
+            ],
+          );
+        }
+      },
+    ),
+  );
+}
+
+
+  Widget _buildAdvancedTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 800) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _buildCard(
+                    '⚡ Advanced Configuration',
+                    Column(
+                      children: [
+                        _buildTextField('Max Retry Attempts', _maxRetriesController, keyboardType: TextInputType.number),
+                        _buildTextField('Retry Delay (seconds)', _retryDelayController, keyboardType: TextInputType.number),
+                        _buildTextField('Message Queue Size', _queueSizeController, keyboardType: TextInputType.number),
+                        const SizedBox(height: 16),
+                        _buildButton('⚡ Save Advanced Settings', () => _showSnackBar('Advanced settings saved successfully!')),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: _buildCard(
+                    '🗂️ Data Management',
+                    Column(
+                      children: [
+                        _buildTextField('Data Retention (days)', _dataRetentionController, keyboardType: TextInputType.number),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(child: _buildSuccessButton('📥 Export Data', () => _showSnackBar('Data export started...'))),
+                            const SizedBox(width: 8),
+                            Expanded(child: _buildSecondaryButton('📤 Import Data', () => _showSnackBar('Import functionality triggered'))),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.only(top: 16),
+                          decoration: BoxDecoration(
+                            border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1)),
+                          ),
+                          child: Column(
+                            children: [
+                              const Text('⚠️ Danger Zone', style: TextStyle(color: Color(0xFFe74c3c), fontWeight: FontWeight.bold, fontSize: 16)),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(child: _buildDangerButton('🗑️ Clear All Data', () => _confirmDangerousAction('clear all data'))),
+                                  const SizedBox(width: 8),
+                                  Expanded(child: _buildDangerButton('🔄 Factory Reset', () => _confirmDangerousAction('perform factory reset'))),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text('These actions cannot be undone!', style: TextStyle(fontSize: 12, color: Colors.grey[600], fontStyle: FontStyle.italic)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          } else {
+            return Column(
+              children: [
+                _buildCard(
+                  '⚡ Advanced Configuration',
+                  Column(
+                    children: [
+                      _buildTextField('Max Retry Attempts', _maxRetriesController, keyboardType: TextInputType.number),
+                      _buildTextField('Retry Delay (seconds)', _retryDelayController, keyboardType: TextInputType.number),
+                      _buildTextField('Message Queue Size', _queueSizeController, keyboardType: TextInputType.number),
+                      const SizedBox(height: 16),
+                      _buildButton('⚡ Save Advanced Settings', () => _showSnackBar('Advanced settings saved successfully!')),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildCard(
+                  '🗂️ Data Management',
+                  Column(
+                    children: [
+                      _buildTextField('Data Retention (days)', _dataRetentionController, keyboardType: TextInputType.number),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(child: _buildSuccessButton('📥 Export Data', () => _showSnackBar('Data export started...'))),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildSecondaryButton('📤 Import Data', () => _showSnackBar('Import functionality triggered'))),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.only(top: 16),
+                        decoration: BoxDecoration(
+                          border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1)),
+                        ),
+                        child: Column(
+                          children: [
+                            const Text('⚠️ Danger Zone', style: TextStyle(color: Color(0xFFe74c3c), fontWeight: FontWeight.bold, fontSize: 16)),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(child: _buildDangerButton('🗑️ Clear All Data', () => _confirmDangerousAction('clear all data'))),
+                                const SizedBox(width: 8),
+                                Expanded(child: _buildDangerButton('🔄 Factory Reset', () => _confirmDangerousAction('perform factory reset'))),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text('These actions cannot be undone!', style: TextStyle(fontSize: 12, color: Colors.grey[600], fontStyle: FontStyle.italic)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }
+        },
       ),
     );
   }
 
   Widget _buildCard(String title, Widget content) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        border: Border.all(color: Colors.grey.withOpacity(0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -634,14 +918,14 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
             child: Text(
               title,
               style: const TextStyle(
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
                 letterSpacing: -0.5,
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           content,
         ],
       ),
@@ -650,7 +934,7 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
 
   Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1, bool obscureText = false, TextInputType? keyboardType}) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -659,10 +943,10 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
             style: const TextStyle(
               fontWeight: FontWeight.w600, 
               color: Colors.black87,
-              fontSize: 14,
+              fontSize: 15,
             )
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           TextFormField(
             controller: controller,
             maxLines: maxLines,
@@ -672,21 +956,21 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
               filled: true,
               fillColor: Colors.grey.withOpacity(0.05),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1.5),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1.5),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: Color(0xFF667eea), width: 2),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               hintStyle: TextStyle(color: Colors.grey.withOpacity(0.6)),
             ),
-            style: const TextStyle(fontSize: 14),
+            style: const TextStyle(fontSize: 15),
           ),
         ],
       ),
@@ -695,7 +979,7 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
 
   Widget _buildDropdown(String label, String value, List<String> items, ValueChanged<String?> onChanged) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -704,10 +988,10 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
             style: const TextStyle(
               fontWeight: FontWeight.w600, 
               color: Colors.black87,
-              fontSize: 14,
+              fontSize: 15,
             )
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           DropdownButtonFormField<String>(
             value: value,
             onChanged: onChanged,
@@ -715,20 +999,20 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
               filled: true,
               fillColor: Colors.grey.withOpacity(0.05),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1.5),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1.5),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: Color(0xFF667eea), width: 2),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
-            style: const TextStyle(fontSize: 14, color: Colors.black87),
+            style: const TextStyle(fontSize: 15, color: Colors.black87),
             items: items.map((item) => DropdownMenuItem(
               value: item, 
               child: Text(item),
@@ -741,7 +1025,7 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
 
   Widget _buildSwitch(String label, bool value, ValueChanged<bool> onChanged) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -751,18 +1035,21 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
               label, 
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
-                fontSize: 14,
+                fontSize: 15,
                 color: Colors.black87,
               ),
             ),
           ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: const Color(0xFF667eea),
-            activeTrackColor: const Color(0xFF667eea).withOpacity(0.3),
-            inactiveThumbColor: Colors.grey.shade400,
-            inactiveTrackColor: Colors.grey.shade300,
+          Transform.scale(
+            scale: 1.1,
+            child: Switch(
+              value: value,
+              onChanged: onChanged,
+              activeColor: const Color(0xFF667eea),
+              activeTrackColor: const Color(0xFF667eea).withOpacity(0.3),
+              inactiveThumbColor: Colors.grey.shade400,
+              inactiveTrackColor: Colors.grey.shade300,
+            ),
           ),
         ],
       ),

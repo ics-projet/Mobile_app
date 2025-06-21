@@ -4,6 +4,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/logs_screen.dart';
 import 'screens/sms_gateway_settings_screen.dart';
 
+
 void main() {
   runApp(const SMSGatewayApp());
 }
@@ -19,14 +20,57 @@ class SMSGatewayApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         fontFamily: 'Segoe UI',
       ),
-      home: const SplashScreen(),
-      debugShowCheckedModeBanner: false,
-      // Add named routes for better navigation
+      initialRoute: '/splash',
       routes: {
+        '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
-        '/dashboard': (context) => const DashboardScreen(username: 'User'),
+      // '/settings': (context) => const SmsGatewaySettingsScreen(),
       },
+onGenerateRoute: (settings) {
+  if (settings.name == '/dashboard') {
+    final args = settings.arguments as Map<String, dynamic>;
+    return MaterialPageRoute(
+      builder: (context) => DashboardScreen(username: args['username']),
     );
+  } else if (settings.name == '/logs') {
+    final args = settings.arguments;
+    if (args != null && args is Map<String, dynamic>) {
+      return MaterialPageRoute(
+        builder: (context) => LogsScreen(username: args['username']),
+      );
+    } else {
+      return MaterialPageRoute(
+        builder: (context) => const Scaffold(
+          body: Center(child: Text('Missing or invalid arguments for /logs')),
+        ),
+      );
+    }
+  } else if (settings.name == '/settings') {
+    final args = settings.arguments;
+    if (args != null && args is Map<String, dynamic>) {
+      return MaterialPageRoute(
+        builder: (context) => SMSGatewaySettingsScreen(username: args['username']),
+      );
+    } else {
+      return MaterialPageRoute(
+        builder: (context) => const Scaffold(
+          body: Center(child: Text('Missing or invalid arguments for /settings')),
+        ),
+      );
+    }
+  }
+
+  // Optional: handle unknown routes
+  return MaterialPageRoute(
+    builder: (context) => const Scaffold(
+      body: Center(child: Text('Unknown route')),
+    ),
+  );
+},
+
+      debugShowCheckedModeBanner: false,
+    );
+
   }
 }
 
@@ -238,12 +282,13 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _apiKeyController = TextEditingController();
-  final _pinCodeController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
   
   bool _isLoading = false;
   String _errorMessage = '';
   bool _hasError = false;
+  bool _obscurePassword = true;
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
 
@@ -266,8 +311,8 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   void dispose() {
-    _apiKeyController.dispose();
-    _pinCodeController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
     _animationController.dispose();
     super.dispose();
   }
@@ -286,6 +331,12 @@ class _LoginScreenState extends State<LoginScreen>
     });
   }
 
+  void _togglePasswordVisibility() {
+    setState(() {
+      _obscurePassword = !_obscurePassword;
+    });
+  }
+
   Future<void> _authenticateUser() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -299,10 +350,12 @@ class _LoginScreenState extends State<LoginScreen>
       await Future.delayed(const Duration(milliseconds: 1500));
 
       // Simple validation (replace with actual API call)
-      if (_apiKeyController.text.length >= 8) {
-        final username = _apiKeyController.text; // Use API key as username for now
+      String username = _usernameController.text.trim();
+      String password = _passwordController.text;
 
-        // Navigate to DashboardScreen - FIXED: Only pass username once
+      // Basic validation - you can replace this with your actual authentication logic
+      if (username.isNotEmpty && password.length >= 6) {
+        // Navigate to DashboardScreen with username
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
@@ -311,16 +364,14 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         );
       } else {
-        _showError('API key must be at least 8 characters long');
+        _showError('Invalid username or password. Password must be at least 6 characters.');
       }
     } catch (error) {
       _showError('Authentication failed. Please try again.');
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -390,12 +441,12 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                           const SizedBox(height: 30),
 
-                          // API Key Field
+                          // Username Field
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'API Key',
+                                'Username',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
@@ -404,10 +455,90 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                               const SizedBox(height: 8),
                               TextFormField(
-                                controller: _apiKeyController,
-                                obscureText: true,
+                                controller: _usernameController,
                                 decoration: InputDecoration(
-                                  hintText: 'Enter your API key',
+                                  hintText: 'Enter your username',
+                                  prefixIcon: const Icon(
+                                    Icons.person_outline,
+                                    color: Color(0xFF667eea),
+                                    size: 20,
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFe1e1e1),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFe1e1e1),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFF667eea),
+                                      width: 2,
+                                    ),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 15,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Please enter your username';
+                                  }
+                                  if (value.trim().length < 3) {
+                                    return 'Username must be at least 3 characters';
+                                  }
+                                  return null;
+                                },
+                                onTap: _hideError,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Password Field
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Password',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF333333),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              TextFormField(
+                                controller: _passwordController,
+                                obscureText: _obscurePassword,
+                                decoration: InputDecoration(
+                                  hintText: 'Enter your password',
+                                  prefixIcon: const Icon(
+                                    Icons.lock_outline,
+                                    color: Color(0xFF667eea),
+                                    size: 20,
+                                  ),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_off_outlined
+                                          : Icons.visibility_outlined,
+                                      color: Color(0xFF667eea),
+                                      size: 20,
+                                    ),
+                                    onPressed: _togglePasswordVisibility,
+                                  ),
                                   filled: true,
                                   fillColor: Colors.white,
                                   border: OutlineInputBorder(
@@ -438,62 +569,13 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter your API key';
+                                    return 'Please enter your password';
+                                  }
+                                  if (value.length < 6) {
+                                    return 'Password must be at least 6 characters';
                                   }
                                   return null;
                                 },
-                                onTap: _hideError,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-
-                          // PIN Code Field
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'PIN Code (Optional)',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Color(0xFF333333),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              TextFormField(
-                                controller: _pinCodeController,
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                  hintText: 'Enter PIN code',
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFe1e1e1),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFFe1e1e1),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFF667eea),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 15,
-                                    vertical: 12,
-                                  ),
-                                ),
                                 onTap: _hideError,
                               ),
                             ],
@@ -548,7 +630,7 @@ class _LoginScreenState extends State<LoginScreen>
                                             ),
                                             const SizedBox(width: 10),
                                             const Text(
-                                              'Authenticating...',
+                                              'Signing in...',
                                               style: TextStyle(
                                                 color: Colors.white,
                                                 fontSize: 16,
@@ -558,7 +640,7 @@ class _LoginScreenState extends State<LoginScreen>
                                           ],
                                         )
                                       : const Text(
-                                          '🔑 Login',
+                                          '🔑 Sign In',
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontSize: 16,
@@ -593,6 +675,28 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                             ),
                           ],
+
+                          // Forgot Password Link
+                          const SizedBox(height: 20),
+                          TextButton(
+                            onPressed: () {
+                              // Handle forgot password - you can implement this later
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Forgot password feature coming soon!'),
+                                  backgroundColor: Color(0xFF667eea),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              'Forgot Password?',
+                              style: TextStyle(
+                                color: Color(0xFF667eea),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),

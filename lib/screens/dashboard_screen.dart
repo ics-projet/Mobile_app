@@ -1,6 +1,8 @@
 // lib/screens/dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../components/app_bar.dart'; 
+
 
 class DashboardScreen extends StatefulWidget {
   final String username;
@@ -23,6 +25,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   late Animation<double> _slideAnimation;
   late Animation<double> _pulseAnimation;
   
+
+  
   // App state
   int _sentCount = 0;
   int _receivedCount = 0;
@@ -37,6 +41,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   void initState() {
     super.initState();
     
+    final String username = widget.username;
     // Initialize animations
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
@@ -337,7 +342,23 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                   opacity: _fadeAnimation.value,
                   child: Column(
                     children: [
-                      _buildAppBar(padding),
+                      CustomAppBar(
+                        activeTab: 'dashboard',
+                        onDashboardTap: () {}, // already here, or navigate
+                        onLogsTap: () => Navigator.pushNamed(
+                                            context,
+                                            '/logs',
+                                            arguments: {'username': widget.username},
+
+                                          ),
+
+                        onSettingsTap: () => Navigator.pushNamed(
+                                context,
+                                '/settings',
+                                arguments: {'username': widget.username},
+                            ),
+                        onLogout: _logout, // your existing logout function
+                      ),
                       Expanded(
                         child: RefreshIndicator(
                           onRefresh: () async {
