@@ -265,7 +265,11 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
 
                                           ),
 
-                        onSettingsTap: () => Navigator.pushNamed(context, '/settings'),
+                        onSettingsTap: () => Navigator.pushNamed(
+                                context,
+                                '/settings',
+                                arguments: {'username': widget.username},
+                            ),
                         onLogout: _logout, // your existing logout function
                       ),
                       Expanded(

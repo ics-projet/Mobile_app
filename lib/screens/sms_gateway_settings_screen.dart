@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../components/app_bar.dart'; 
 
 class SMSGatewaySettingsScreen extends StatefulWidget {
-  const SMSGatewaySettingsScreen({Key? key}) : super(key: key);
+  final String username;
+
+  const SMSGatewaySettingsScreen({
+    Key? key,
+    required this.username,
+  }) : super(key: key);
 
   @override
   State<SMSGatewaySettingsScreen> createState() => _SMSGatewaySettingsScreenState();
@@ -54,6 +60,7 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
   @override
   void initState() {
     super.initState();
+    final String username = widget.username;
     _tabController = TabController(length: 5, vsync: this);
   }
 
@@ -92,7 +99,23 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
         child: SafeArea(
           child: Column(
             children: [
-              _buildAppBar(),
+                  CustomAppBar(
+                            activeTab: 'logs',
+                            onDashboardTap: () => Navigator.pushNamed(
+                                context,
+                                '/dashboard',
+                                arguments: {'username': widget.username},
+                            ),
+                            onLogsTap: () => Navigator.pushNamed(
+                                            context,
+                                            '/logs',
+                                            arguments: {'username': widget.username},
+
+                                          ),
+                            onSettingsTap: () {},
+                            onLogout: _logout, // your existing logout function
+                            ),
+
               Expanded(
                 child: Container(
                   margin: const EdgeInsets.all(16),
@@ -134,86 +157,6 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
     );
   }
 
-  Widget _buildAppBar() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Use responsive layout based on available width
-          if (constraints.maxWidth > 800) {
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Flexible(
-                  child: Text(
-                    '📱 SMS Gateway',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF667eea),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Flexible(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildNavButton('🏠 Dashboard', () {}),
-                      const SizedBox(width: 12),
-                      _buildNavButton('📊 Logs', () {}),
-                      const SizedBox(width: 12),
-                      _buildActiveNavButton('⚙️ Settings'),
-                      const SizedBox(width: 12),
-                      _buildLogoutButton(),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          } else {
-            // Stack layout for smaller screens
-            return Column(
-              children: [
-                const Text(
-                  '📱 SMS Gateway',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF667eea),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    _buildNavButton('🏠 Dashboard', () {}),
-                    _buildNavButton('📊 Logs', () {}),
-                    _buildActiveNavButton('⚙️ Settings'),
-                    _buildLogoutButton(),
-                  ],
-                ),
-              ],
-            );
-          }
-        },
-      ),
-    );
-  }
 
   Widget _buildNavButton(String text, VoidCallback onPressed) {
     return TextButton(
