@@ -9,12 +9,8 @@ class SMSGatewaySettingsScreen extends StatefulWidget {
 }
 
 class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late AnimationController _fadeController;
-  late AnimationController _slideController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
   
   // General Settings
   final TextEditingController _deviceNameController = TextEditingController(text: 'SMS Gateway #1');
@@ -39,7 +35,6 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
   final TextEditingController _serialPortController = TextEditingController(text: '/dev/ttyUSB0');
   final TextEditingController _simPinController = TextEditingController();
   bool _autoReconnect = true;
-  bool _gsmConnected = true;
   
   // Webhook Settings
   bool _enableWebhooks = false;
@@ -60,33 +55,11 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-    
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
-    );
-    
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
-    
-    _fadeController.forward();
-    _slideController.forward();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _fadeController.dispose();
-    _slideController.dispose();
     // Dispose all controllers
     _deviceNameController.dispose();
     _autoResponseController.dispose();
@@ -113,60 +86,48 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF667eea),
-              Color(0xFF764ba2),
-              Color(0xFF667eea),
-            ],
-            stops: [0.0, 0.5, 1.0],
+            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
           ),
         ),
         child: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: Column(
-                children: [
-                  _buildAppBar(),
-                  Expanded(
-                    child: Container(
-                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
-                            blurRadius: 30,
-                            offset: const Offset(0, 15),
-                            spreadRadius: -5,
-                          ),
-                        ],
+          child: Column(
+            children: [
+              _buildAppBar(),
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.95),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
                       ),
-                      child: Column(
-                        children: [
-                          _buildHeader(),
-                          _buildTabBar(),
-                          Expanded(
-                            child: TabBarView(
-                              controller: _tabController,
-                              children: [
-                                _buildGeneralTab(),
-                                _buildApiTab(),
-                                _buildGsmTab(),
-                                _buildWebhooksTab(),
-                                _buildAdvancedTab(),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    ],
                   ),
-                ],
+                  child: Column(
+                    children: [
+                      _buildHeader(),
+                      _buildTabBar(),
+                      Expanded(
+                        child: TabBarView(
+                          controller: _tabController,
+                          children: [
+                            _buildGeneralTab(),
+                            _buildApiTab(),
+                            _buildGsmTab(),
+                            _buildWebhooksTab(),
+                            _buildAdvancedTab(),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -176,197 +137,151 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
   Widget _buildAppBar() {
     return Container(
       margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
           ),
         ],
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.sms, color: Colors.white, size: 24),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'SMS Gateway',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2c3e50),
-                ),
-              ),
-            ],
-          ),
-          Row(
-            children: [
-              _buildNavButton('🏠 Dashboard', Icons.dashboard, () {}),
-              const SizedBox(width: 12),
-              _buildNavButton('📊 Logs', Icons.analytics, () {}),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF667eea).withOpacity(0.3),
-                      offset: const Offset(0, 4),
-                      blurRadius: 12,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Use responsive layout based on available width
+          if (constraints.maxWidth > 800) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Flexible(
+                  child: Text(
+                    '📱 SMS Gateway',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF667eea),
                     ),
-                  ],
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                child: const Row(
+                Flexible(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildNavButton('🏠 Dashboard', () {}),
+                      const SizedBox(width: 12),
+                      _buildNavButton('📊 Logs', () {}),
+                      const SizedBox(width: 12),
+                      _buildActiveNavButton('⚙️ Settings'),
+                      const SizedBox(width: 12),
+                      _buildLogoutButton(),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          } else {
+            // Stack layout for smaller screens
+            return Column(
+              children: [
+                const Text(
+                  '📱 SMS Gateway',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF667eea),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
                   children: [
-                    Icon(Icons.settings, color: Colors.white, size: 18),
-                    SizedBox(width: 6),
-                    Text(
-                      'Settings',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    _buildNavButton('🏠 Dashboard', () {}),
+                    _buildNavButton('📊 Logs', () {}),
+                    _buildActiveNavButton('⚙️ Settings'),
+                    _buildLogoutButton(),
                   ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              _buildLogoutButton(),
-            ],
-          ),
-        ],
+              ],
+            );
+          }
+        },
       ),
     );
   }
 
-  Widget _buildNavButton(String text, IconData icon, VoidCallback onPressed) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.withOpacity(0.2)),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 18, color: Colors.grey[700]),
-              const SizedBox(width: 6),
-              Text(
-                text.replaceAll(RegExp(r'[^\w\s]'), ''),
-                style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
-        ),
+  Widget _buildNavButton(String text, VoidCallback onPressed) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.black87, fontSize: 14),
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  Widget _buildActiveNavButton(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF667eea),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 14),
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
 
   Widget _buildLogoutButton() {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: _logout,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xFFe74c3c).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFe74c3c).withOpacity(0.3)),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.logout, color: Color(0xFFe74c3c), size: 18),
-              SizedBox(width: 6),
-              Text(
-                'Logout',
-                style: TextStyle(
-                  color: Color(0xFFe74c3c),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
+    return ElevatedButton(
+      onPressed: _logout,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFFe74c3c),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      ),
+      child: const Text(
+        '🚪 Logout',
+        style: TextStyle(color: Colors.white, fontSize: 14),
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(32, 32, 32, 16),
+      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF667eea).withOpacity(0.3),
-                      offset: const Offset(0, 4),
-                      blurRadius: 12,
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.settings, color: Colors.white, size: 28),
-              ),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Settings & Configuration',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2c3e50),
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Configure your SMS gateway settings and preferences',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Color(0xFF7f8c8d),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          const Text(
+            '⚙️ Settings & Configuration',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Configure your SMS gateway settings and preferences',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+            ),
           ),
         ],
       ),
@@ -375,102 +290,110 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
 
   Widget _buildTabBar() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 32),
-      padding: const EdgeInsets.all(4),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.2)),
-      ),
-      child: TabBar(
-        controller: _tabController,
-        labelColor: Colors.white,
-        unselectedLabelColor: const Color(0xFF7f8c8d),
-        labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-        indicator: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-          ),
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF667eea).withOpacity(0.3),
-              offset: const Offset(0, 2),
-              blurRadius: 8,
-            ),
-          ],
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: Colors.transparent,
-        tabs: const [
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.tune, size: 16),
-                SizedBox(width: 4),
-                Text('General'),
-              ],
-            ),
-          ),
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.security, size: 16),
-                SizedBox(width: 4),
-                Text('API'),
-              ],
-            ),
-          ),
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.router, size: 16),
-                SizedBox(width: 4),
-                Text('GSM'),
-              ],
-            ),
-          ),
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.webhook, size: 16),
-                SizedBox(width: 4),
-                Text('Webhooks'),
-              ],
-            ),
-          ),
-          Tab(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.advanced, size: 16),
-                SizedBox(width: 4),
-                Text('Advanced'),
-              ],
-            ),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return TabBar(
+            controller: _tabController,
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.black87,
+            isScrollable: constraints.maxWidth < 600,
+            indicator: BoxDecoration(
+              color: const Color(0xFF667eea),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            unselectedLabelStyle: const TextStyle(fontSize: 12),
+            tabs: const [
+              Tab(text: '🔧 General'),
+              Tab(text: '🔑 API'),
+              Tab(text: '📡 GSM'),
+              Tab(text: '🔗 Webhooks'),
+              Tab(text: '⚡ Advanced'),
+            ],
+          );
+        },
       ),
     );
   }
 
   Widget _buildGeneralTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _buildCard(
-                  'General Configuration',
-                  Icons.tune,
+      padding: const EdgeInsets.all(20),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 800) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _buildCard(
+                    '🔧 General Configuration',
+                    Column(
+                      children: [
+                        _buildTextField('Device Name', _deviceNameController),
+                        _buildDropdown('Timezone', _selectedTimezone, [
+                          'UTC',
+                          'America/New_York',
+                          'America/Chicago',
+                          'America/Denver',
+                          'America/Los_Angeles',
+                          'Europe/London',
+                          'Europe/Paris',
+                          'Asia/Tokyo',
+                        ], (value) => setState(() => _selectedTimezone = value!)),
+                        _buildSwitch('Enable Auto-Responses', _autoResponses, (value) => setState(() => _autoResponses = value)),
+                        _buildTextField('Auto-Response Message', _autoResponseController, maxLines: 3),
+                        const SizedBox(height: 16),
+                        _buildButton('💾 Save General Settings', () => _showSnackBar('General settings saved successfully!')),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: _buildCard(
+                    '📊 System Status',
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildStatusIndicator('🟢 System Online', true),
+                        const SizedBox(height: 16),
+                        const Text('System Information:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        _buildInfoRow('Uptime:', '2 days, 14 hours'),
+                        _buildInfoRow('Memory Usage:', '45%'),
+                        _buildInfoRow('Storage:', '1.2GB / 4GB'),
+                        _buildInfoRow('Version:', 'v1.0.0'),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(child: _buildSecondaryButton('🔄 Restart', () => _showSnackBar('System restart initiated...'))),
+                            const SizedBox(width: 8),
+                            Expanded(child: _buildSuccessButton('📥 Updates', () => _showSnackBar('Checking for updates...'))),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          } else {
+            return Column(
+              children: [
+                _buildCard(
+                  '🔧 General Configuration',
                   Column(
                     children: [
                       _buildTextField('Device Name', _deviceNameController),
@@ -485,379 +408,626 @@ class _SMSGatewaySettingsScreenState extends State<SMSGatewaySettingsScreen>
                         'Asia/Tokyo',
                       ], (value) => setState(() => _selectedTimezone = value!)),
                       _buildSwitch('Enable Auto-Responses', _autoResponses, (value) => setState(() => _autoResponses = value)),
-                      if (_autoResponses)
-                        _buildTextField('Auto-Response Message', _autoResponseController, maxLines: 3),
-                      const SizedBox(height: 20),
-                      _buildPrimaryButton('Save General Settings', Icons.save, () => _showSnackBar('General settings saved successfully!')),
+                      _buildTextField('Auto-Response Message', _autoResponseController, maxLines: 3),
+                      const SizedBox(height: 16),
+                      _buildButton('💾 Save General Settings', () => _showSnackBar('General settings saved successfully!')),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: _buildCard(
-                  'System Status',
-                  Icons.monitor_heart,
+                const SizedBox(height: 16),
+                _buildCard(
+                  '📊 System Status',
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildStatusIndicator('System Online', true),
-                      const SizedBox(height: 24),
-                      _buildSectionHeader('System Information'),
+                      _buildStatusIndicator('🟢 System Online', true),
                       const SizedBox(height: 16),
-                      _buildInfoRow('Uptime', '2 days, 14 hours', Icons.schedule),
-                      _buildInfoRow('Memory Usage', '45%', Icons.memory),
-                      _buildInfoRow('Storage', '1.2GB / 4GB', Icons.storage),
-                      _buildInfoRow('Version', 'v1.0.0', Icons.info),
-                      const SizedBox(height: 24),
+                      const Text('System Information:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      _buildInfoRow('Uptime:', '2 days, 14 hours'),
+                      _buildInfoRow('Memory Usage:', '45%'),
+                      _buildInfoRow('Storage:', '1.2GB / 4GB'),
+                      _buildInfoRow('Version:', 'v1.0.0'),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
-                          Expanded(child: _buildSecondaryButton('Restart', Icons.refresh, () => _showSnackBar('System restart initiated...'))),
-                          const SizedBox(width: 12),
-                          Expanded(child: _buildSuccessButton('Updates', Icons.system_update, () => _showSnackBar('Checking for updates...'))),
+                          Expanded(child: _buildSecondaryButton('🔄 Restart', () => _showSnackBar('System restart initiated...'))),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildSuccessButton('📥 Updates', () => _showSnackBar('Checking for updates...'))),
                         ],
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            );
+          }
+        },
       ),
     );
   }
 
   Widget _buildApiTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _buildCard(
-                  'API Keys Management',
-                  Icons.key,
+      padding: const EdgeInsets.all(20),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 800) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _buildCard(
+                    '🔑 API Keys Management',
+                    Column(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Primary API Key', style: TextStyle(fontWeight: FontWeight.w500)),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: _apiKey,
+                                    obscureText: !_showApiKey,
+                                    readOnly: true,
+                                    style: const TextStyle(fontFamily: 'monospace'),
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      fillColor: Colors.grey[100],
+                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                IconButton(
+                                  onPressed: _copyApiKey,
+                                  icon: const Icon(Icons.copy, size: 20),
+                                  tooltip: 'Copy',
+                                ),
+                                ElevatedButton(
+                                  onPressed: _regenerateApiKey,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFe74c3c),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  ),
+                                  child: const Text('🔄 Regenerate', style: TextStyle(color: Colors.white, fontSize: 12)),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        _buildSwitch('Enable API Rate Limiting', _rateLimiting, (value) => setState(() => _rateLimiting = value)),
+                        _buildTextField('Rate Limit (requests per minute)', _rateLimitController, keyboardType: TextInputType.number),
+                        _buildTextField('Allowed IP Addresses', _allowedIPsController, maxLines: 3),
+                        const SizedBox(height: 16),
+                        _buildButton('💾 Save API Settings', () => _showSnackBar('API settings saved successfully!')),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: _buildCard(
+                    '🔐 Security Settings',
+                    Column(
+                      children: [
+                        _buildSwitch('Enable HTTPS Only', _httpsOnly, (value) => setState(() => _httpsOnly = value)),
+                        _buildSwitch('Enable Request Logging', _requestLogging, (value) => setState(() => _requestLogging = value)),
+                        _buildTextField('Session Timeout (minutes)', _sessionTimeoutController, keyboardType: TextInputType.number),
+                        _buildTextField('Max Login Attempts', _maxLoginAttemptsController, keyboardType: TextInputType.number),
+                        const SizedBox(height: 16),
+                        _buildButton('🔒 Save Security Settings', () => _showSnackBar('Security settings saved successfully!')),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          } else {
+            return Column(
+              children: [
+                _buildCard(
+                  '🔑 API Keys Management',
                   Column(
                     children: [
-                      _buildApiKeyField(),
-                      const SizedBox(height: 20),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Primary API Key', style: TextStyle(fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            initialValue: _apiKey,
+                            obscureText: !_showApiKey,
+                            readOnly: true,
+                            style: const TextStyle(fontFamily: 'monospace'),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.grey[100],
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: _copyApiKey,
+                                  icon: const Icon(Icons.copy, size: 16),
+                                  label: const Text('Copy', style: TextStyle(fontSize: 12)),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF6c757d),
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: _regenerateApiKey,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFe74c3c),
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                  ),
+                                  child: const Text('🔄 Regenerate', style: TextStyle(color: Colors.white, fontSize: 12)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                       _buildSwitch('Enable API Rate Limiting', _rateLimiting, (value) => setState(() => _rateLimiting = value)),
-                      if (_rateLimiting)
-                        _buildTextField('Rate Limit (requests per minute)', _rateLimitController, keyboardType: TextInputType.number),
+                      _buildTextField('Rate Limit (requests per minute)', _rateLimitController, keyboardType: TextInputType.number),
                       _buildTextField('Allowed IP Addresses', _allowedIPsController, maxLines: 3),
-                      const SizedBox(height: 20),
-                      _buildPrimaryButton('Save API Settings', Icons.save, () => _showSnackBar('API settings saved successfully!')),
+                      const SizedBox(height: 16),
+                      _buildButton('💾 Save API Settings', () => _showSnackBar('API settings saved successfully!')),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: _buildCard(
-                  'Security Settings',
-                  Icons.shield,
+                const SizedBox(height: 16),
+                _buildCard(
+                  '🔐 Security Settings',
                   Column(
                     children: [
                       _buildSwitch('Enable HTTPS Only', _httpsOnly, (value) => setState(() => _httpsOnly = value)),
                       _buildSwitch('Enable Request Logging', _requestLogging, (value) => setState(() => _requestLogging = value)),
                       _buildTextField('Session Timeout (minutes)', _sessionTimeoutController, keyboardType: TextInputType.number),
                       _buildTextField('Max Login Attempts', _maxLoginAttemptsController, keyboardType: TextInputType.number),
-                      const SizedBox(height: 20),
-                      _buildPrimaryButton('Save Security Settings', Icons.security, () => _showSnackBar('Security settings saved successfully!')),
+                      const SizedBox(height: 16),
+                      _buildButton('🔒 Save Security Settings', () => _showSnackBar('Security settings saved successfully!')),
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            );
+          }
+        },
       ),
     );
   }
 
   Widget _buildGsmTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _buildCard(
-                  'GSM Module Configuration',
-                  Icons.router,
+      padding: const EdgeInsets.all(20),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 800) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _buildCard(
+                    '📡 GSM Module Configuration',
+                    Column(
+                      children: [
+                        _buildStatusIndicator('📶 GSM Connected - Signal: 85%', true),
+                        const SizedBox(height: 16),
+                        _buildDropdown('GSM Module Type', _gsmModule, ['SIM800L', 'SIM900', 'A6', 'SIM7600'], (value) => setState(() => _gsmModule = value!)),
+                        _buildDropdown('Baud Rate', _baudRate, ['9600', '19200', '38400', '57600', '115200'], (value) => setState(() => _baudRate = value!)),
+                        _buildTextField('Serial Port', _serialPortController),
+                        _buildTextField('SIM PIN (if required)', _simPinController, obscureText: true),
+                        _buildSwitch('Auto-Reconnect on Failure', _autoReconnect, (value) => setState(() => _autoReconnect = value)),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(child: _buildButton('📡 Save GSM Settings', () => _showSnackBar('GSM settings saved successfully!'))),
+                            const SizedBox(width: 8),
+                            Expanded(child: _buildSecondaryButton('🔧 Test Connection', () => _showSnackBar('GSM Connection Test: SUCCESS'))),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: _buildCard(
+                    '📋 GSM Diagnostics',
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Current Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        _buildInfoRow('Network:', 'Connected'),
+                        _buildInfoRow('Signal Strength:', '85%'),
+                        _buildInfoRow('Operator:', 'Verizon'),
+                        _buildInfoRow('SMS Center:', '+1234567890'),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(child: _buildSecondaryButton('🔄 Refresh', () => _showSnackBar('GSM status refreshed!'))),
+                            const SizedBox(width: 8),
+                            Expanded(child: _buildSuccessButton('📤 Test SMS', () => _showSnackBar('Test SMS sent successfully!'))),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          } else {
+            return Column(
+              children: [
+                _buildCard(
+                  '📡 GSM Module Configuration',
                   Column(
                     children: [
-                      _buildStatusIndicator('GSM Connected - Signal: 85%', _gsmConnected),
-                      const SizedBox(height: 20),
+                      _buildStatusIndicator('📶 GSM Connected - Signal: 85%', true),
+                      const SizedBox(height: 16),
                       _buildDropdown('GSM Module Type', _gsmModule, ['SIM800L', 'SIM900', 'A6', 'SIM7600'], (value) => setState(() => _gsmModule = value!)),
                       _buildDropdown('Baud Rate', _baudRate, ['9600', '19200', '38400', '57600', '115200'], (value) => setState(() => _baudRate = value!)),
                       _buildTextField('Serial Port', _serialPortController),
                       _buildTextField('SIM PIN (if required)', _simPinController, obscureText: true),
                       _buildSwitch('Auto-Reconnect on Failure', _autoReconnect, (value) => setState(() => _autoReconnect = value)),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
-                          Expanded(child: _buildPrimaryButton('Save GSM Settings', Icons.save, () => _showSnackBar('GSM settings saved successfully!'))),
-                          const SizedBox(width: 12),
-                          Expanded(child: _buildSecondaryButton('Test Connection', Icons.network_check, () => _showSnackBar('GSM Connection Test: SUCCESS'))),
+                          Expanded(child: _buildButton('📡 Save GSM Settings', () => _showSnackBar('GSM settings saved successfully!'))),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildSecondaryButton('🔧 Test Connection', () => _showSnackBar('GSM Connection Test: SUCCESS'))),
                         ],
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: _buildCard(
-                  'GSM Diagnostics',
-                  Icons.analytics,
+                const SizedBox(height: 16),
+                _buildCard(
+                  '📋 GSM Diagnostics',
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionHeader('Current Status'),
+                      const Text('Current Status:', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      _buildInfoRow('Network:', 'Connected'),
+                      _buildInfoRow('Signal Strength:', '85%'),
+                      _buildInfoRow('Operator:', 'Verizon'),
+                      _buildInfoRow('SMS Center:', '+1234567890'),
                       const SizedBox(height: 16),
-                      _buildInfoRow('Network', 'Connected', Icons.network_cell),
-                      _buildInfoRow('Signal Strength', '85%', Icons.signal_cellular_alt),
-                      _buildInfoRow('Operator', 'Verizon', Icons.business),
-                      _buildInfoRow('SMS Center', '+1234567890', Icons.sms),
-                      const SizedBox(height: 24),
                       Row(
                         children: [
-                          Expanded(child: _buildSecondaryButton('Refresh', Icons.refresh, () => _showSnackBar('GSM status refreshed!'))),
-                          const SizedBox(width: 12),
-                          Expanded(child: _buildSuccessButton('Test SMS', Icons.send, () => _showSnackBar('Test SMS sent successfully!'))),
+                          Expanded(child: _buildSecondaryButton('🔄 Refresh', () => _showSnackBar('GSM status refreshed!'))),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildSuccessButton('📤 Test SMS', () => _showSnackBar('Test SMS sent successfully!'))),
                         ],
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            );
+          }
+        },
       ),
     );
   }
 
-  Widget _buildWebhooksTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          Row(
+Widget _buildWebhooksTab() {
+  return SingleChildScrollView(
+    padding: const EdgeInsets.all(20),
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final webhookSection = _buildCard(
+          '🔗 Webhook Configuration',
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: _buildCard(
-                  'Webhook Configuration',
-                  Icons.webhook,
-                  Column(
-                    children: [
-                      _buildSwitch('Enable Webhooks', _enableWebhooks, (value) => setState(() => _enableWebhooks = value)),
-                      if (_enableWebhooks) ...[
-                        const SizedBox(height: 16),
-                        _buildTextField('Webhook URL', _webhookUrlController),
-                        _buildTextField('Webhook Secret', _webhookSecretController, obscureText: true),
-                        const SizedBox(height: 16),
-                        _buildSectionHeader('Webhook Events'),
-                        const SizedBox(height: 12),
-                        _buildCheckboxTile('SMS Sent Successfully', _webhookSent, (value) => setState(() => _webhookSent = value!)),
-                        _buildCheckboxTile('SMS Received', _webhookReceived, (value) => setState(() => _webhookReceived = value!)),
-                        _buildCheckboxTile('SMS Failed', _webhookFailed, (value) => setState(() => _webhookFailed = value!)),
-                        _buildCheckboxTile('Status Changes', _webhookStatus, (value) => setState(() => _webhookStatus = value!)),
-                        const SizedBox(height: 16),
-                        _buildSecondaryButton('Test Webhook', Icons.bug_report, () => _showSnackBar('Webhook Test: SUCCESS - HTTP 200 OK received')),
-                      ],
-                      const SizedBox(height: 20),
-                      _buildPrimaryButton('Save Webhook Settings', Icons.save, () => _showSnackBar('Webhook settings saved successfully!')),
-                    ],
-                  ),
+              _buildSwitch('Enable Webhooks', _enableWebhooks, (value) => setState(() => _enableWebhooks = value)),
+              if (_enableWebhooks) ...[
+                _buildTextField('Webhook URL', _webhookUrlController),
+                _buildTextField('Webhook Secret', _webhookSecretController, obscureText: true),
+                const SizedBox(height: 8),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text('Webhook Events:', style: TextStyle(fontWeight: FontWeight.w500)),
                 ),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: _buildCard(
-                  'External Integrations',
-                  Icons.extension,
-                  Column(
-                    children: [
-                      _buildIntegrationTile(
-                        'Google Calendar',
-                        'Send SMS reminders for calendar events',
-                        Icons.calendar_today,
-                        false,
-                      ),
-                      _buildIntegrationTile(
-                        'Zapier',
-                        'Automate SMS workflows with 3000+ apps',
-                        Icons.autorenew,
-                        false,
-                      ),
-                      _buildIntegrationTile(
-                        'WhatsApp API',
-                        'Bridge SMS and WhatsApp messages',
-                        Icons.chat,
-                        false,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+                _buildCheckbox('SMS Sent Successfully', _webhookSent, (value) => setState(() => _webhookSent = value!)),
+                _buildCheckbox('SMS Received', _webhookReceived, (value) => setState(() => _webhookReceived = value!)),
+                _buildCheckbox('SMS Failed', _webhookFailed, (value) => setState(() => _webhookFailed = value!)),
+                _buildCheckbox('Status Changes', _webhookStatus, (value) => setState(() => _webhookStatus = value!)),
+                const SizedBox(height: 16),
+                _buildSecondaryButton('🧪 Test Webhook', () => _showSnackBar('Webhook Test: SUCCESS - HTTP 200 OK received')),
+              ],
+              const SizedBox(height: 16),
+              _buildButton('🔗 Save Webhook Settings', () => _showSnackBar('Webhook settings saved successfully!')),
             ],
           ),
-        ],
-      ),
-    );
-  }
+        );
+
+        final integrationsSection = _buildCard(
+          '🔌 External Integrations',
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildIntegrationItem('Google Calendar Integration', '🔗 Connect Google Calendar', 'Send SMS reminders for calendar events'),
+              _buildIntegrationItem('Zapier Integration', '🔗 Connect Zapier', 'Automate SMS workflows with 3000+ apps'),
+              const Text('WhatsApp API', style: TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              TextFormField(
+                decoration: InputDecoration(
+                  hintText: 'WhatsApp API Token',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Colors.grey.withOpacity(0.5), width: 2),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Color(0xFF667eea), width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildSecondaryButton('🔗 Connect WhatsApp', () => _showSnackBar('WhatsApp integration configured!')),
+              const SizedBox(height: 4),
+              Text('Bridge SMS and WhatsApp messages', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+            ],
+          ),
+        );
+
+        if (constraints.maxWidth > 800) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: webhookSection),
+              const SizedBox(width: 20),
+              Expanded(child: integrationsSection),
+            ],
+          );
+        } else {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              webhookSection,
+              const SizedBox(height: 20),
+              integrationsSection,
+            ],
+          );
+        }
+      },
+    ),
+  );
+}
+
 
   Widget _buildAdvancedTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _buildCard(
-                  'Advanced Configuration',
-                  Icons.tune,
+      padding: const EdgeInsets.all(20),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth > 800) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _buildCard(
+                    '⚡ Advanced Configuration',
+                    Column(
+                      children: [
+                        _buildTextField('Max Retry Attempts', _maxRetriesController, keyboardType: TextInputType.number),
+                        _buildTextField('Retry Delay (seconds)', _retryDelayController, keyboardType: TextInputType.number),
+                        _buildTextField('Message Queue Size', _queueSizeController, keyboardType: TextInputType.number),
+                        const SizedBox(height: 16),
+                        _buildButton('⚡ Save Advanced Settings', () => _showSnackBar('Advanced settings saved successfully!')),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: _buildCard(
+                    '🗂️ Data Management',
+                    Column(
+                      children: [
+                        _buildTextField('Data Retention (days)', _dataRetentionController, keyboardType: TextInputType.number),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(child: _buildSuccessButton('📥 Export Data', () => _showSnackBar('Data export started...'))),
+                            const SizedBox(width: 8),
+                            Expanded(child: _buildSecondaryButton('📤 Import Data', () => _showSnackBar('Import functionality triggered'))),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.only(top: 16),
+                          decoration: BoxDecoration(
+                            border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1)),
+                          ),
+                          child: Column(
+                            children: [
+                              const Text('⚠️ Danger Zone', style: TextStyle(color: Color(0xFFe74c3c), fontWeight: FontWeight.bold, fontSize: 16)),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(child: _buildDangerButton('🗑️ Clear All Data', () => _confirmDangerousAction('clear all data'))),
+                                  const SizedBox(width: 8),
+                                  Expanded(child: _buildDangerButton('🔄 Factory Reset', () => _confirmDangerousAction('perform factory reset'))),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text('These actions cannot be undone!', style: TextStyle(fontSize: 12, color: Colors.grey[600], fontStyle: FontStyle.italic)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          } else {
+            return Column(
+              children: [
+                _buildCard(
+                  '⚡ Advanced Configuration',
                   Column(
                     children: [
                       _buildTextField('Max Retry Attempts', _maxRetriesController, keyboardType: TextInputType.number),
                       _buildTextField('Retry Delay (seconds)', _retryDelayController, keyboardType: TextInputType.number),
                       _buildTextField('Message Queue Size', _queueSizeController, keyboardType: TextInputType.number),
-                      const SizedBox(height: 20),
-                      _buildPrimaryButton('Save Advanced Settings', Icons.save, () => _showSnackBar('Advanced settings saved successfully!')),
+                      const SizedBox(height: 16),
+                      _buildButton('⚡ Save Advanced Settings', () => _showSnackBar('Advanced settings saved successfully!')),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                child: _buildCard(
-                  'Data Management',
-                  Icons.storage,
+                const SizedBox(height: 16),
+                _buildCard(
+                  '🗂️ Data Management',
                   Column(
                     children: [
                       _buildTextField('Data Retention (days)', _dataRetentionController, keyboardType: TextInputType.number),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
-                          Expanded(child: _buildSuccessButton('Export Data', Icons.download, () => _showSnackBar('Data export started...'))),
-                          const SizedBox(width: 12),
-                          Expanded(child: _buildSecondaryButton('Import Data', Icons.upload, () => _showSnackBar('Import functionality triggered'))),
+                          Expanded(child: _buildSuccessButton('📥 Export Data', () => _showSnackBar('Data export started...'))),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildSecondaryButton('📤 Import Data', () => _showSnackBar('Import functionality triggered'))),
                         ],
                       ),
-                      const SizedBox(height: 32),
-                      _buildDangerSection(),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.only(top: 16),
+                        decoration: BoxDecoration(
+                          border: Border(top: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1)),
+                        ),
+                        child: Column(
+                          children: [
+                            const Text('⚠️ Danger Zone', style: TextStyle(color: Color(0xFFe74c3c), fontWeight: FontWeight.bold, fontSize: 16)),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(child: _buildDangerButton('🗑️ Clear All Data', () => _confirmDangerousAction('clear all data'))),
+                                const SizedBox(width: 8),
+                                Expanded(child: _buildDangerButton('🔄 Factory Reset', () => _confirmDangerousAction('perform factory reset'))),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text('These actions cannot be undone!', style: TextStyle(fontSize: 12, color: Colors.grey[600], fontStyle: FontStyle.italic)),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            );
+          }
+        },
       ),
     );
   }
 
-  Widget _buildCard(String title, IconData icon, Widget content) {
+  Widget _buildCard(String title, Widget content) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(0.08),
             blurRadius: 20,
             offset: const Offset(0, 8),
-            spreadRadius: -4,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
+        border: Border.all(color: Colors.grey.withOpacity(0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: Colors.white, size: 20),
+          Container(
+            padding: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey.withOpacity(0.15), width: 1)),
+            ),
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+                letterSpacing: -0.5,
               ),
-              const SizedBox(width: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2c3e50),
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           content,
         ],
       ),
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {
-    int maxLines = 1,
-    bool obscureText = false,
-    TextInputType? keyboardType,
-  }) {
+  Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1, bool obscureText = false, TextInputType? keyboardType}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            label,
+            label, 
             style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF2c3e50),
-              fontSize: 14,
-            ),
+              fontWeight: FontWeight.w600, 
+              color: Colors.black87,
+              fontSize: 15,
+            )
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           TextFormField(
             controller: controller,
             maxLines: maxLines,
             obscureText: obscureText,
             keyboardType: keyboardType,
             decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.grey.withOpacity(0.05),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1.5),
               ),
-enabledBorder: OutlineInputBorder(
+              enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1.5),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: Color(0xFF667eea), width: 2),
               ),
-              filled: true,
-              fillColor: Colors.grey.withOpacity(0.05),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              hintStyle: TextStyle(color: Colors.grey[400]),
+              hintStyle: TextStyle(color: Colors.grey.withOpacity(0.6)),
             ),
+            style: const TextStyle(fontSize: 15),
           ),
         ],
       ),
@@ -871,38 +1041,38 @@ enabledBorder: OutlineInputBorder(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            label,
+            label, 
             style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF2c3e50),
-              fontSize: 14,
-            ),
+              fontWeight: FontWeight.w600, 
+              color: Colors.black87,
+              fontSize: 15,
+            )
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           DropdownButtonFormField<String>(
             value: value,
             onChanged: onChanged,
             decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.grey.withOpacity(0.05),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1.5),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
+                borderSide: BorderSide(color: Colors.grey.withOpacity(0.3), width: 1.5),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(color: Color(0xFF667eea), width: 2),
               ),
-              filled: true,
-              fillColor: Colors.grey.withOpacity(0.05),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
-            icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF667eea)),
+            style: const TextStyle(fontSize: 15, color: Colors.black87),
             items: items.map((item) => DropdownMenuItem(
-              value: item,
-              child: Text(item, style: const TextStyle(color: Color(0xFF2c3e50))),
+              value: item, 
+              child: Text(item),
             )).toList(),
           ),
         ],
@@ -913,34 +1083,29 @@ enabledBorder: OutlineInputBorder(
   Widget _buildSwitch(String label, bool value, ValueChanged<bool> onChanged) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
             child: Text(
-              label,
+              label, 
               style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF2c3e50),
-                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: Colors.black87,
               ),
             ),
           ),
           Transform.scale(
-            scale: 0.8,
+            scale: 1.1,
             child: Switch(
               value: value,
               onChanged: onChanged,
               activeColor: const Color(0xFF667eea),
               activeTrackColor: const Color(0xFF667eea).withOpacity(0.3),
-              inactiveThumbColor: Colors.grey[400],
-              inactiveTrackColor: Colors.grey[300],
+              inactiveThumbColor: Colors.grey.shade400,
+              inactiveTrackColor: Colors.grey.shade300,
             ),
           ),
         ],
@@ -948,185 +1113,130 @@ enabledBorder: OutlineInputBorder(
     );
   }
 
-  Widget _buildCheckboxTile(String label, bool value, ValueChanged<bool?> onChanged) {
+  Widget _buildCheckbox(String label, bool value, ValueChanged<bool?> onChanged) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: CheckboxListTile(
-        title: Text(
-          label,
+      margin: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Transform.scale(
+            scale: 1.1,
+            child: Checkbox(
+              value: value,
+              onChanged: onChanged,
+              activeColor: const Color(0xFF667eea),
+              checkColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 15,
+                color: Colors.black87,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildButton(String text, VoidCallback onPressed) {
+    return Container(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF667eea),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 3,
+          shadowColor: const Color(0xFF667eea).withOpacity(0.3),
+        ),
+        child: Text(
+          text, 
           style: const TextStyle(
-            fontSize: 14,
-            color: Color(0xFF2c3e50),
-          ),
-        ),
-        value: value,
-        onChanged: onChanged,
-        activeColor: const Color(0xFF667eea),
-        checkColor: Colors.white,
-        contentPadding: EdgeInsets.zero,
-        controlAffinity: ListTileControlAffinity.leading,
-      ),
-    );
-  }
-
-  Widget _buildPrimaryButton(String text, IconData icon, VoidCallback onPressed) {
-    return Container(
-      width: double.infinity,
-      height: 50,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF667eea).withOpacity(0.3),
-            offset: const Offset(0, 4),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(12),
-          child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  text,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            letterSpacing: 0.5,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSecondaryButton(String text, IconData icon, VoidCallback onPressed) {
+  Widget _buildSecondaryButton(String text, VoidCallback onPressed) {
     return Container(
       width: double.infinity,
       height: 50,
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.3)),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(12),
-          child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: const Color(0xFF667eea), size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  text,
-                  style: const TextStyle(
-                    color: Color(0xFF667eea),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF6c757d),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 2,
+          shadowColor: const Color(0xFF6c757d).withOpacity(0.3),
+        ),
+        child: Text(
+          text, 
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            letterSpacing: 0.5,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildSuccessButton(String text, IconData icon, VoidCallback onPressed) {
+  Widget _buildSuccessButton(String text, VoidCallback onPressed) {
     return Container(
       width: double.infinity,
       height: 50,
-      decoration: BoxDecoration(
-        color: const Color(0xFF27ae60),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF27ae60).withOpacity(0.3),
-            offset: const Offset(0, 4),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(12),
-          child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  text,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF28a745),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 2,
+          shadowColor: const Color(0xFF28a745).withOpacity(0.3),
+        ),
+        child: Text(
+          text, 
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            letterSpacing: 0.5,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDangerButton(String text, IconData icon, VoidCallback onPressed) {
+  Widget _buildDangerButton(String text, VoidCallback onPressed) {
     return Container(
       width: double.infinity,
       height: 50,
-      decoration: BoxDecoration(
-        color: const Color(0xFFe74c3c),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFe74c3c).withOpacity(0.3),
-            offset: const Offset(0, 4),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(12),
-          child: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  text,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFe74c3c),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 2,
+          shadowColor: const Color(0xFFe74c3c).withOpacity(0.3),
+        ),
+        child: Text(
+          text, 
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            letterSpacing: 0.5,
           ),
         ),
       ),
@@ -1137,11 +1247,11 @@ enabledBorder: OutlineInputBorder(
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isOnline ? const Color(0xFF27ae60).withOpacity(0.1) : const Color(0xFFe74c3c).withOpacity(0.1),
+        color: isOnline ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isOnline ? const Color(0xFF27ae60) : const Color(0xFFe74c3c),
-          width: 1,
+          color: isOnline ? Colors.green.withOpacity(0.3) : Colors.red.withOpacity(0.3),
+          width: 1.5,
         ),
       ),
       child: Row(
@@ -1150,7 +1260,7 @@ enabledBorder: OutlineInputBorder(
             width: 8,
             height: 8,
             decoration: BoxDecoration(
-              color: isOnline ? const Color(0xFF27ae60) : const Color(0xFFe74c3c),
+              color: isOnline ? Colors.green : Colors.red,
               shape: BoxShape.circle,
             ),
           ),
@@ -1159,9 +1269,9 @@ enabledBorder: OutlineInputBorder(
             child: Text(
               text,
               style: TextStyle(
-                color: isOnline ? const Color(0xFF27ae60) : const Color(0xFFe74c3c),
+                color: isOnline ? Colors.green[700] : Colors.red[700],
                 fontWeight: FontWeight.w600,
-                fontSize: 14,
+                fontSize: 15,
               ),
             ),
           ),
@@ -1170,43 +1280,26 @@ enabledBorder: OutlineInputBorder(
     );
   }
 
-  Widget _buildSectionHeader(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-        color: Color(0xFF2c3e50),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF667eea).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 16, color: const Color(0xFF667eea)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+          Text(
+            label, 
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
             ),
           ),
           Text(
-            value,
+            value, 
             style: const TextStyle(
               fontWeight: FontWeight.w600,
-              color: Color(0xFF2c3e50),
-              fontSize: 14,
+              fontSize: 15,
+              color: Colors.black87,
             ),
           ),
         ],
@@ -1214,180 +1307,55 @@ enabledBorder: OutlineInputBorder(
     );
   }
 
-  Widget _buildIntegrationTile(String title, String description, IconData icon, bool isEnabled) {
+  Widget _buildIntegrationItem(String title, String buttonText, String description) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.grey.withOpacity(0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey.withOpacity(0.2)),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isEnabled ? const Color(0xFF667eea).withOpacity(0.1) : Colors.grey.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              icon,
-              size: 20,
-              color: isEnabled ? const Color(0xFF667eea) : Colors.grey[500],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2c3e50),
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Transform.scale(
-            scale: 0.8,
-            child: Switch(
-              value: isEnabled,
-              onChanged: (value) {
-                _showSnackBar('${title} ${value ? 'enabled' : 'disabled'}');
-              },
-              activeColor: const Color(0xFF667eea),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildApiKeyField() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'API Key',
-            style: TextStyle(
+          Text(
+            title, 
+            style: const TextStyle(
               fontWeight: FontWeight.w600,
-              color: Color(0xFF2c3e50),
-              fontSize: 14,
+              fontSize: 16,
+              color: Colors.black87,
             ),
           ),
           const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.withOpacity(0.3)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _showApiKey ? _apiKey : '••••••••••••••••••••',
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 14,
-                      color: Color(0xFF2c3e50),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => setState(() => _showApiKey = !_showApiKey),
-                  icon: Icon(_showApiKey ? Icons.visibility_off : Icons.visibility),
-                  color: const Color(0xFF667eea),
-                  iconSize: 20,
-                ),
-                IconButton(
-                  onPressed: _copyApiKey,
-                  icon: const Icon(Icons.copy),
-                  color: const Color(0xFF667eea),
-                  iconSize: 20,
-                ),
-                IconButton(
-                  onPressed: _regenerateApiKey,
-                  icon: const Icon(Icons.refresh),
-                  color: const Color(0xFFe74c3c),
-                  iconSize: 20,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDangerSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFe74c3c).withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFe74c3c).withOpacity(0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.warning, color: Color(0xFFe74c3c), size: 20),
-              const SizedBox(width: 8),
-              const Text(
-                'Danger Zone',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFe74c3c),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'These actions are irreversible. Please proceed with caution.',
+          Text(
+            description, 
             style: TextStyle(
-              color: Color(0xFFe74c3c),
-              fontSize: 14,
+              fontSize: 13,
+              color: Colors.grey[600],
+              height: 1.4,
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildDangerButton(
-                  'Clear All Data',
-                  Icons.delete_forever,
-                  () => _confirmDangerousAction('clear all data'),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: ElevatedButton(
+              onPressed: () => _showSnackBar('${title} integration configured!'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF667eea),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                elevation: 2,
+              ),
+              child: Text(
+                buttonText,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildDangerButton(
-                  'Factory Reset',
-                  Icons.settings_backup_restore,
-                  () => _confirmDangerousAction('factory reset'),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -1398,10 +1366,10 @@ enabledBorder: OutlineInputBorder(
     Clipboard.setData(ClipboardData(text: _apiKey));
     _showSnackBar('API key copied to clipboard!');
     setState(() {
-      _showApiKey = true;
+      _showApiKey = !_showApiKey;
     });
     
-    // Hide API key after 3 seconds for security
+    // Hide API key after 3 seconds
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() {
@@ -1417,15 +1385,13 @@ enabledBorder: OutlineInputBorder(
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
-            children: [
-              Icon(Icons.warning, color: Color(0xFFe74c3c)),
-              SizedBox(width: 8),
-              Text('Regenerate API Key'),
-            ],
+          title: const Text(
+            '⚠️ Regenerate API Key',
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
           content: const Text(
             'Are you sure you want to regenerate the API key? This will invalidate the current key and may break existing integrations.',
+            style: TextStyle(fontSize: 15, height: 1.4),
           ),
           actions: [
             TextButton(
@@ -1458,14 +1424,14 @@ enabledBorder: OutlineInputBorder(
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: [
-              const Icon(Icons.warning, color: Color(0xFFe74c3c)),
-              const SizedBox(width: 8),
-              Text('Confirm ${action.toUpperCase()}'),
-            ],
+          title: Text(
+            '⚠️ Confirm ${action.toUpperCase()}',
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
-          content: Text('Are you sure you want to $action? This action cannot be undone!'),
+          content: Text(
+            'Are you sure you want to $action? This action cannot be undone!',
+            style: const TextStyle(fontSize: 15, height: 1.4),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -1489,21 +1455,17 @@ enabledBorder: OutlineInputBorder(
   }
 
   void _showSnackBar(String message) {
-    if (!mounted) return;
-    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 20),
-            const SizedBox(width: 8),
-            Expanded(child: Text(message)),
-          ],
+        content: Text(
+          message,
+          style: const TextStyle(fontWeight: FontWeight.w500),
         ),
         backgroundColor: const Color(0xFF667eea),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(20),
+        margin: const EdgeInsets.all(16),
+        elevation: 6,
         duration: const Duration(seconds: 3),
       ),
     );
@@ -1515,14 +1477,14 @@ enabledBorder: OutlineInputBorder(
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Row(
-            children: [
-              Icon(Icons.logout, color: Color(0xFFe74c3c)),
-              SizedBox(width: 8),
-              Text('Logout'),
-            ],
+          title: const Text(
+            '🚪 Logout',
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          content: const Text('Are you sure you want to logout?'),
+          content: const Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(fontSize: 15),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -1531,8 +1493,8 @@ enabledBorder: OutlineInputBorder(
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
+                // Add logout logic here
                 _showSnackBar('Logged out successfully!');
-                // Add actual logout navigation logic here
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFe74c3c),
@@ -1546,3 +1508,4 @@ enabledBorder: OutlineInputBorder(
     );
   }
 }
+                          
