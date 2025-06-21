@@ -1,6 +1,8 @@
 // lib/screens/dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../components/app_bar.dart'; 
+
 
 class DashboardScreen extends StatefulWidget {
   final String username;
@@ -23,6 +25,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   late Animation<double> _slideAnimation;
   late Animation<double> _pulseAnimation;
   
+
+  
   // App state
   int _sentCount = 0;
   int _receivedCount = 0;
@@ -34,6 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   void initState() {
     super.initState();
     
+    final String username = widget.username;
     // Initialize animations
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
@@ -250,7 +255,19 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                   opacity: _fadeAnimation.value,
                   child: Column(
                     children: [
-                      _buildAppBar(padding),
+                      CustomAppBar(
+                        activeTab: 'dashboard',
+                        onDashboardTap: () {}, // already here, or navigate
+                        onLogsTap: () => Navigator.pushNamed(
+                                            context,
+                                            '/logs',
+                                            arguments: {'username': widget.username},
+
+                                          ),
+
+                        onSettingsTap: () => Navigator.pushNamed(context, '/settings'),
+                        onLogout: _logout, // your existing logout function
+                      ),
                       Expanded(
                         child: RefreshIndicator(
                           onRefresh: () async {
@@ -286,94 +303,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     );
   }
 
-  Widget _buildAppBar(double padding) {
-    return Container(
-      margin: EdgeInsets.all(padding),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedBuilder(
-                  animation: _pulseAnimation,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: _pulseAnimation.value,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.sms, color: Colors.white, size: 20),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(width: 12),
-                const Flexible(
-                  child: Text(
-                    'SMS Gateway',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF667eea),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(
-                child: Text(
-                  'Hi, ${widget.username}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: _logout,
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.logout, color: Colors.red, size: 18),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildTabletLayout() {
     return Row(

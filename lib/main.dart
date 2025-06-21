@@ -20,9 +20,39 @@ class SMSGatewayApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         fontFamily: 'Segoe UI',
       ),
-      home: const SplashScreen(),
+      initialRoute: '/splash',
+      routes: {
+        '/splash': (context) => const SplashScreen(),
+        '/login': (context) => const LoginScreen(),
+       // '/settings': (context) => const SmsGatewaySettingsScreen(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/dashboard') {
+          final args = settings.arguments as Map<String, dynamic>;
+          return MaterialPageRoute(
+            builder: (context) => DashboardScreen(username: args['username']),
+          );
+        } else if (settings.name == '/logs') {
+          final args = settings.arguments;
+          if (args != null && args is Map<String, dynamic>) {
+            return MaterialPageRoute(
+              builder: (context) => LogsScreen(username: args['username']),
+            );
+          } else {
+            // Optionally handle missing arguments with fallback UI or error
+            return MaterialPageRoute(
+              builder: (context) => const Scaffold(
+                body: Center(child: Text('Missing or invalid arguments for /logs')),
+              ),
+            );
+          }
+        }
+
+        return null;
+      },
       debugShowCheckedModeBanner: false,
     );
+
   }
 }
 
@@ -303,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const SMSGatewaySettingsScreen(),
+            builder: (context) => DashboardScreen(username: username),
           ),
         );
       } else {

@@ -1,6 +1,7 @@
 // lib/screens/logs_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../components/app_bar.dart'; 
 
 class LogsScreen extends StatefulWidget {
   final String username;
@@ -362,7 +363,13 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
                   opacity: _fadeAnimation.value,
                   child: Column(
                     children: [
-                      _buildAppBar(padding),
+                      CustomAppBar(
+                        activeTab: 'logs',
+                        onDashboardTap: () {}, // to change 
+                        onLogsTap:  () {}, // already here
+                        onSettingsTap: () => Navigator.pushNamed(context, '/settings'),
+                        onLogout: _logout, // your existing logout function
+                      ),
                       Expanded(
                         child: RefreshIndicator(
                           onRefresh: _refreshLogs,
@@ -394,115 +401,6 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildAppBar(double padding) {
-    return Container(
-      margin: EdgeInsets.all(padding),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            flex: 2,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedBuilder(
-                  animation: _pulseAnimation,
-                  builder: (context, child) {
-                    return Transform.scale(
-                      scale: _pulseAnimation.value,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF667eea), Color(0xFF764ba2)],
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.analytics, color: Colors.white, size: 20),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    'SMS Logs',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF667eea),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Dashboard button
-                GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    Navigator.pushReplacementNamed(context, '/dashboard');
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF667eea).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.dashboard, color: Color(0xFF667eea), size: 18),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    'Hi, ${widget.username}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: _logout,
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(Icons.logout, color: Colors.red, size: 18),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildFiltersCard(bool isTablet) {
     return Container(
