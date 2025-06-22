@@ -1,8 +1,10 @@
 // lib/screens/login_screen.dart
 import 'package:flutter/material.dart';
 import 'dashboard_screen.dart';
+import 'register_screen.dart';  // Add this import
 import '../services/api_service.dart';
 import '../services/session_manager.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -68,50 +70,60 @@ class _LoginScreenState extends State<LoginScreen>
     });
   }
 
- Future<void> _authenticateUser() async {
-  if (!_formKey.currentState!.validate()) return;
+  Future<void> _authenticateUser() async {
+    if (!_formKey.currentState!.validate()) return;
 
-  setState(() {
-    _isLoading = true;
-    _hasError = false;
-  });
+    setState(() {
+      _isLoading = true;
+      _hasError = false;
+    });
 
-  final result = await ApiService.login(
-    _usernameController.text.trim(),
-    _passwordController.text,
-  );
-
-  if (!mounted) return;
-
-  setState(() {
-    _isLoading = false;
-  });
-
-  if (result['success']) {
-    // Save the API key - THIS IS WHERE YOU NEED TO ADD IT
-    final apiKey = result['data']['api_key'];
-    await SessionManager.saveSession(
-      accessToken: apiKey, // Using api_key as access token
-      refreshToken: '', // No refresh token in your current backend
-      username: _usernameController.text.trim(),
-      apiKey: apiKey, // Add this line to store the API key separately
+    final result = await ApiService.login(
+      _usernameController.text.trim(),
+      _passwordController.text,
     );
 
-    Navigator.pushReplacement(
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (result['success']) {
+      // Save the API key - THIS IS WHERE YOU NEED TO ADD IT
+      final apiKey = result['data']['api_key'];
+      await SessionManager.saveSession(
+        accessToken: apiKey, // Using api_key as access token
+        refreshToken: '', // No refresh token in your current backend
+        username: _usernameController.text.trim(),
+        apiKey: apiKey, // Add this line to store the API key separately
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DashboardScreen(
+            username: _usernameController.text.trim(),
+          ),
+        ),
+      );
+    } else {
+      setState(() {
+        _hasError = true;
+        _errorMessage = result['error'] ?? 'Login failed';
+      });
+    }
+  }
+
+  void _navigateToRegister() {
+    Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DashboardScreen(
-          username: _usernameController.text.trim(),
-        ),
+        builder: (context) => const RegisterScreen(),
       ),
     );
-  } else {
-    setState(() {
-      _hasError = true;
-      _errorMessage = result['error'] ?? 'Login failed';
-    });
   }
-}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -431,6 +443,50 @@ class _LoginScreenState extends State<LoginScreen>
                                 color: Color(0xFF667eea),
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+
+                          // Signup Section
+                          const SizedBox(height: 10),
+                          const Divider(
+                            color: Color(0xFFe1e1e1),
+                            thickness: 1,
+                          ),
+                          const SizedBox(height: 15),
+                          
+                          // Don't have an account text
+                          const Text(
+                            "Don't have an account?",
+                            style: TextStyle(
+                              color: Color(0xFF666666),
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          
+                          // Sign Up Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 45,
+                            child: OutlinedButton(
+                              onPressed: _isLoading ? null : _navigateToRegister,
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(
+                                  color: Color(0xFF667eea),
+                                  width: 2,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Text(
+                                '👤 Create Account',
+                                style: TextStyle(
+                                  color: Color(0xFF667eea),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),

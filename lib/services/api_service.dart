@@ -208,30 +208,54 @@ class ApiService {
   }
 
   // Register method
-  static Future<Map<String, dynamic>> register(
-    String username, 
-    String password, 
-    String phoneNumber
-  ) async {
-    try {
-      final url = Uri.parse(ApiConfig.buildUrl(ApiConfig.registerEndpoint));
+  // Updated register method in ApiService class
+static Future<Map<String, dynamic>> register(
+  String username, 
+  String password, 
+  String phoneNumber
+) async {
+  try {
+    final url = Uri.parse(ApiConfig.buildUrl(ApiConfig.registerEndpoint));
+    
+    final response = await http.post(
+      url,
+      headers: {
+        'accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: 'username=$username&password=$password&phone_number=$phoneNumber',
+    ).timeout(ApiConfig.requestTimeout);
+
+    final result = _handleResponse(response, 'Registration successful');
+    
+    // If registration is successful, save the api_key to session
+    if (result['success'] && result['data'] != null) {
+      final responseData = result['data'];
+      final apiKey = responseData['api_key'];
+      final registeredUsername = responseData['username'];
+      final registeredPhoneNumber = responseData['phone_number'];
       
-      final response = await http.post(
-        url,
-        headers: ApiConfig.defaultHeaders,
-        body: json.encode({
-          'username': username,
-          'password': password,
-          'phone_number': phoneNumber,
-        }),
-      ).timeout(ApiConfig.requestTimeout);
-
-      return _handleResponse(response, 'Registration successful');
-    } catch (e) {
-      return _handleError(e, 'Registration failed');
+      if (apiKey != null) {
+        // Save basic session data (without tokens since this is just registration)
+        await SessionManager.saveSession(
+          accessToken: '', // Empty for now, will be filled on login
+          refreshToken: '', // Empty for now, will be filled on login  
+          username: registeredUsername ?? username,
+          apiKey: apiKey,
+        );
+        
+        // Add the api_key to the result for easier access
+        result['api_key'] = apiKey;
+        result['registered_username'] = registeredUsername;
+        result['phone_number'] = registeredPhoneNumber;
+      }
     }
+    
+    return result;
+  } catch (e) {
+    return _handleError(e, 'Registration failed');
   }
-
+}
   // Refresh token method
   static Future<Map<String, dynamic>> refreshToken(String refreshToken) async {
     try {
