@@ -829,16 +829,16 @@ void _updateCounts() {
 
 Widget _buildRecentMessagesCard() {
   // Filter messages based on current filter
-List<Message> filteredMessages = _messages.where((message) {
-  switch (_currentFilter) {
-    case MessageFilter.all:
-      return true;
-    case MessageFilter.outbound:
-      return message.type == MessageType.outbound;
-    case MessageFilter.inbound:
-      return message.type == MessageType.inbound;
-  }
-}).toList();
+  List<Message> filteredMessages = _messages.where((message) {
+    switch (_currentFilter) {
+      case MessageFilter.all:
+        return true;
+      case MessageFilter.outbound:
+        return message.type == MessageType.outbound;
+      case MessageFilter.inbound:
+        return message.type == MessageType.inbound;
+    }
+  }).toList();
 
   return Container(
     width: double.infinity,
@@ -857,11 +857,15 @@ List<Message> filteredMessages = _messages.where((message) {
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
+        // Header Row
         Row(
           children: [
+            // Title section with proper flex
             Expanded(
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
@@ -874,22 +878,23 @@ List<Message> filteredMessages = _messages.where((message) {
                     child: const Icon(Icons.message_rounded, color: Colors.white, size: 20),
                   ),
                   const SizedBox(width: 12),
-                  const Flexible(
+                  Flexible(
                     child: Text(
                       'Recent Messages',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
                       ),
                       overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            Container(
+            // Refresh button
+            SizedBox(
               width: 40,
               height: 40,
               child: IconButton(
@@ -925,81 +930,125 @@ List<Message> filteredMessages = _messages.where((message) {
         ),
         const SizedBox(height: 20),
         
-        // Filter buttons
-Row(
-  children: [
-    _buildFilterButton(
-      'All',
-      MessageFilter.all,
-      Icons.all_inbox_rounded,
-      _messages.length,
-    ),
-    const SizedBox(width: 8),
-    _buildFilterButton(
-      'Sent', // Keep user-friendly label
-      MessageFilter.outbound, // But use correct filter
-      Icons.send_rounded,
-      _messages.where((m) => m.type == MessageType.outbound).length,
-    ),
-    const SizedBox(width: 8),
-    _buildFilterButton(
-      'Received', // Keep user-friendly label
-      MessageFilter.inbound, // But use correct filter
-      Icons.inbox_rounded,
-      _messages.where((m) => m.type == MessageType.inbound).length,
-    ),
-  ],
-),
+        // Filter buttons with SingleChildScrollView for overflow protection
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: IntrinsicWidth(
+            child: Row(
+              children: [
+                SizedBox(
+                  width: MediaQuery.of(context).size.width > 600 
+                    ? (MediaQuery.of(context).size.width - 96) / 3 - 8
+                    : 100,
+                  child: _buildFilterButton(
+                    'All',
+                    MessageFilter.all,
+                    Icons.all_inbox_rounded,
+                    _messages.length,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width > 600 
+                    ? (MediaQuery.of(context).size.width - 96) / 3 - 8
+                    : 100,
+                  child: _buildFilterButton(
+                    'Sent',
+                    MessageFilter.outbound,
+                    Icons.send_rounded,
+                    _messages.where((m) => m.type == MessageType.outbound).length,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width > 600 
+                    ? (MediaQuery.of(context).size.width - 96) / 3 - 8
+                    : 120,
+                  child: _buildFilterButton(
+                    'Received',
+                    MessageFilter.inbound,
+                    Icons.inbox_rounded,
+                    _messages.where((m) => m.type == MessageType.inbound).length,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
         const SizedBox(height: 20),
         
-        filteredMessages.isEmpty
-            ? Container(
-                padding: const EdgeInsets.all(40),
-                child: Column(
-                  children: [
-                    Icon(
-                      _currentFilter == MessageFilter.all 
-                        ? Icons.message_outlined
-                        : _currentFilter == MessageFilter.outbound
-                          ? Icons.send_outlined
-                          : Icons.inbox_outlined,
-                      size: 48,
-                      color: Colors.grey.shade400,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _isLoadingMessages 
-                        ? 'Loading messages...' 
-                        : _getEmptyStateMessage(),
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    if (!_isLoadingMessages)
-                      Text(
-                        _getEmptyStateSubtitle(),
-                        style: TextStyle(
-                          color: Colors.grey.shade500,
-                          fontSize: 14,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                  ],
-                ),
-              )
-            : ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: filteredMessages.length,
-                itemBuilder: (context, index) {
-                  final message = filteredMessages[index];
-                  return _buildMessageItem(message, index);
-                },
+        // Content area with proper constraints
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.4,
+                minHeight: 100,
               ),
+              child: filteredMessages.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _currentFilter == MessageFilter.all 
+                                ? Icons.message_outlined
+                                : _currentFilter == MessageFilter.outbound
+                                  ? Icons.send_outlined
+                                  : Icons.inbox_outlined,
+                              size: 48,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 16),
+                            Flexible(
+                              child: Text(
+                                _isLoadingMessages 
+                                  ? 'Loading messages...' 
+                                  : _getEmptyStateMessage(),
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                textAlign: TextAlign.center,
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                              ),
+                            ),
+                            if (!_isLoadingMessages) ...[
+                              const SizedBox(height: 8),
+                              Flexible(
+                                child: Text(
+                                  _getEmptyStateSubtitle(),
+                                  style: TextStyle(
+                                    color: Colors.grey.shade500,
+                                    fontSize: 14,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 3,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: filteredMessages.length,
+                      itemBuilder: (context, index) {
+                        final message = filteredMessages[index];
+                        return _buildMessageItem(message, index);
+                      },
+                    ),
+            );
+          },
+        ),
       ],
     ),
   );
@@ -1057,14 +1106,6 @@ Widget _buildFilterButton(String label, MessageFilter filter, IconData icon, int
                   ? Colors.white.withOpacity(0.2)
                   : const Color(0xFF667eea).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                count.toString(),
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: isSelected ? Colors.white : const Color(0xFF667eea),
-                ),
               ),
             ),
           ],
