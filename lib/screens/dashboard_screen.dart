@@ -576,17 +576,17 @@ void _updateCounts() {
       childAspectRatio: childAspectRatio,
       children: [
         _buildStatCard(
-          'Sent',
+          'Received',
           _sentCount.toString(),
-          Icons.send_rounded,
+          Icons.inbox_rounded,
           const LinearGradient(
             colors: [Color(0xFF4facfe), Color(0xFF00f2fe)],
           ),
         ),
         _buildStatCard(
-          'Received',
+          'Sent',
           _receivedCount.toString(),
-          Icons.inbox_rounded,
+          Icons.send_rounded,
           const LinearGradient(
             colors: [Color(0xFF43e97b), Color(0xFF38f9d7)],
           ),
@@ -951,11 +951,11 @@ Widget _buildRecentMessagesCard() {
                 SizedBox(
                   width: MediaQuery.of(context).size.width > 600 
                     ? (MediaQuery.of(context).size.width - 96) / 3 - 8
-                    : 100,
+                    : 120,
                   child: _buildFilterButton(
-                    'Sent',
+                    'Received',
                     MessageFilter.outbound,
-                    Icons.send_rounded,
+                    Icons.inbox_rounded,
                     _messages.where((m) => m.type == MessageType.outbound).length,
                   ),
                 ),
@@ -963,11 +963,11 @@ Widget _buildRecentMessagesCard() {
                 SizedBox(
                   width: MediaQuery.of(context).size.width > 600 
                     ? (MediaQuery.of(context).size.width - 96) / 3 - 8
-                    : 120,
+                    : 100,
                   child: _buildFilterButton(
-                    'Received',
+                    'Sent',
                     MessageFilter.inbound,
-                    Icons.inbox_rounded,
+                    Icons.send_rounded,
                     _messages.where((m) => m.type == MessageType.inbound).length,
                   ),
                 ),
