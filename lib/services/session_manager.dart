@@ -62,18 +62,12 @@ class SessionManager {
            session['username'] != null;
   }
 
+  // FIXED: Remove automatic token expiration check
+  // The backend should handle token validation, not the client
   static Future<bool> isTokenExpired() async {
-    final session = await getSession();
-    final loginTimeStr = session['login_time'];
-    
-    if (loginTimeStr == null) return true;
-    
-    final loginTime = DateTime.parse(loginTimeStr);
-    final now = DateTime.now();
-    final difference = now.difference(loginTime);
-    
-    // Assume token expires after 24 hours (adjust based on your backend)
-    return difference.inHours >= 24;
+    // Always return false - let the backend decide if token is expired
+    // The app will handle 401/403 responses from API calls
+    return false;
   }
 
   // Helper method to get API key
@@ -86,5 +80,13 @@ class SessionManager {
   static Future<String?> getAccessToken() async {
     final session = await getSession();
     return session['access_token'];
+  }
+
+  // Add method to check if session data exists without expiration logic
+  static Future<bool> hasValidSessionData() async {
+    final session = await getSession();
+    return session['access_token'] != null && 
+           session['api_key'] != null && 
+           session['username'] != null;
   }
 }

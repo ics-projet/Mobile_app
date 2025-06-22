@@ -1,7 +1,7 @@
 // lib/config/api_config.dart
 class ApiConfig {
   // Base URL without trailing slash
-  static const String baseUrl = 'http://192.168.205.216:8000';
+  static const String baseUrl = 'https://abfe-154-121-111-119.ngrok-free.app';
   // Alternative: Use ngrok URL for testing
   // static const String baseUrl = 'https://abfe-154-121-111-119.ngrok-free.app';
   
@@ -27,7 +27,10 @@ class ApiConfig {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
-  
+  static Map<String, String> get headers => {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
   // Headers with API key
   static Map<String, String> headersWithApiKey(String apiKey) => {
     ...defaultHeaders,
