@@ -2,9 +2,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../components/app_bar.dart'; 
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../services/log_service.dart';
+import '../models/sms_log.dart';
 import 'dart:async';
-
+// lib/screens/logs_screen.dart
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../components/app_bar.dart'; 
+import '../services/api_service.dart';
+import '../services/session_manager.dart';
 class LogsScreen extends StatefulWidget {
   final String username;
   
@@ -45,8 +53,6 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
   int _successfulMessages = 0;
   int _failedMessages = 0;
   double _successRate = 0.0;
-
-  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -97,49 +103,10 @@ class _LogsScreenState extends State<LogsScreen> with TickerProviderStateMixin {
     _pulseController.dispose();
     _searchController.dispose();
     _scrollController.dispose();
-    _debounceTimer?.cancel();
     super.dispose();
   }
 
-  // Generate mock logs data
- /* List<SMSLog> _generateMockLogs() {
-    final logs = <SMSLog>[];
-    final statuses = [LogStatus.sent, LogStatus.failed, LogStatus.pending];
-    final types = [LogType.outbound, LogType.inbound];
-    final phones = ['+1234567890', '+0987654321', '+1122334455', '+5566778899'];
-    final messages = [
-      'Hello, this is a test message',
-      'Your appointment is confirmed for tomorrow',
-      'Thank you for your purchase',
-      'Meeting reminder: 3 PM today',
-      'Your verification code is 123456',
-      'Welcome to our service!',
-      'Payment received successfully',
-      'Order #12345 has been shipped'
-    ];
-
-    for (int i = 0; i < 50; i++) {
-      final date = DateTime.now().subtract(Duration(
-        days: (DateTime.now().millisecond % 30),
-        hours: (DateTime.now().millisecond % 24),
-        minutes: (DateTime.now().millisecond % 60),
-      ));
-      
-      logs.add(SMSLog(
-        id: (i + 1).toString(),
-        phoneNumber: phones[i % phones.length],
-        message: messages[i % messages.length],
-        status: statuses[i % statuses.length],
-        type: types[i % types.length],
-        timestamp: date,
-        deliveryTime: (i % 10) + 1.0,
-      ));
-    }
-
-    return logs..sort((a, b) => b.timestamp.compareTo(a.timestamp));
-  }  */
-
-Future<void> _loadLogs() async {
+  Future<void> _loadLogs() async {
   if (_isLoading) return;
   
   setState(() {
@@ -147,24 +114,28 @@ Future<void> _loadLogs() async {
   });
 
   try {
-    // Call the real API instead of generating mock data
-    _allLogs = await LogService.fetchLogs(
-      dateFrom: _dateFrom,
-      dateTo: _dateTo,
-      status: _statusFilter.isNotEmpty ? _statusFilter : null,
-      type: _typeFilter.isNotEmpty ? _typeFilter : null,
-      search: _searchController.text.isNotEmpty ? _searchController.text : null,
-    );
+    final session = await SessionManager.getSession();
+    final apiKey = session['api_key'];
     
-    _applyFilters();
-    _updateStatistics();
+    if (apiKey == null) {
+      throw Exception('No API key found');
+    }
+
+    final result = await ApiService.getCommunicationLogs(apiKey: apiKey);
+    
+    if (result['success']) {
+      setState(() {
+        _allLogs = (result['logs'] as List)
+            .map((log) => SMSLog.fromJson(log))
+            .toList();
+        _applyFilters();
+        _updateStatistics();
+      });
+    } else {
+      _showSnackBar(result['error'], Colors.red);
+    }
   } catch (e) {
     _showSnackBar('Error loading logs: ${e.toString()}', Colors.red);
-    
-    // Fallback to mock data if API fails (optional - remove in production)
-  //  _allLogs = _generateMockLogs();
-    _applyFilters();
-    _updateStatistics();
   } finally {
     setState(() {
       _isLoading = false;
@@ -187,27 +158,33 @@ Future<void> _loadLogs() async {
     });
   }
 
-void _applyFilters() {
-  _filteredLogs = _allLogs.where((log) {
-    // Search filter (since date, status, type are already filtered by API)
-    final searchTerm = _searchController.text.toLowerCase();
-    if (searchTerm.isNotEmpty &&
-        !log.phoneNumber.toLowerCase().contains(searchTerm) &&
-        !log.message.toLowerCase().contains(searchTerm)) {
-      return false;
-    }
-    
-    return true;
-  }).toList();
+  void _applyFilters() {
+    _filteredLogs = _allLogs.where((log) {
+      // Date filter
+      if (_dateFrom != null && log.timestamp.isBefore(_dateFrom!)) return false;
+      if (_dateTo != null && log.timestamp.isAfter(_dateTo!.add(const Duration(days: 1)))) return false;
+      
+      // Status filter
+      if (_statusFilter.isNotEmpty && log.status.name != _statusFilter) return false;
+      
+      // Type filter
+      if (_typeFilter.isNotEmpty && log.type.name != _typeFilter) return false;
+      
+      // Search filter
+      final searchTerm = _searchController.text.toLowerCase();
+      if (searchTerm.isNotEmpty &&
+          !log.phoneNumber.toLowerCase().contains(searchTerm) &&
+          !log.message.toLowerCase().contains(searchTerm)) {
+        return false;
+      }
+      
+      return true;
+    }).toList();
 
-  _currentPage = 1;
-  _updateStatistics();
-  setState(() {});
-}
-
-Future<void> _applyFiltersWithReload() async {
-  await _loadLogs(); // This will fetch filtered data from API
-}
+    _currentPage = 1;
+    _updateStatistics();
+    setState(() {});
+  }
 
   void _updateStatistics() {
     _totalMessages = _filteredLogs.length;
@@ -215,13 +192,6 @@ Future<void> _applyFiltersWithReload() async {
     _failedMessages = _filteredLogs.where((log) => log.status == LogStatus.failed).length;
     _successRate = _totalMessages > 0 ? (_successfulMessages / _totalMessages) * 100 : 0.0;
   }
-
-  void _debounceSearch() {
-  if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
-  _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-    _applyFiltersWithReload();
-  });
-}
 
   void _showLogDetails(SMSLog log) {
     HapticFeedback.selectionClick();
@@ -246,7 +216,7 @@ Future<void> _applyFiltersWithReload() async {
               _buildDetailRow('Status', log.status.name.toUpperCase()),
               _buildDetailRow('Type', log.type.name.toUpperCase()),
               _buildDetailRow('Time', _formatDateTime(log.timestamp)),
-              _buildDetailRow('Delivery Time', '${log.deliveryTime.toStringAsFixed(2)}s'),
+              //_buildDetailRow('Delivery Time', '${log.deliveryTime.toStringAsFixed(2)}s'),
             ],
           ),
         ),
@@ -284,8 +254,16 @@ Future<void> _applyFiltersWithReload() async {
 
   void _exportLogs() {
     HapticFeedback.selectionClick();
-    // Simulate export functionality
-    _showSnackBar('Logs exported successfully!', Colors.green);
+    // TODO: Implement actual export functionality
+    // Example:
+    // try {
+    //   await ExportService.exportLogs(_filteredLogs);
+    //   _showSnackBar('Logs exported successfully!', Colors.green);
+    // } catch (e) {
+    //   _showSnackBar('Export failed: ${e.toString()}', Colors.red);
+    // }
+    
+    _showSnackBar('Export functionality not implemented yet', Colors.orange);
   }
 
   void _showSnackBar(String message, Color color) {
@@ -703,46 +681,43 @@ Future<void> _applyFiltersWithReload() async {
     );
   }
 
-Widget _buildSearchField() {
-  return TextField(
-    controller: _searchController,
-    decoration: InputDecoration(
-      labelText: 'Search',
-      hintText: 'Search messages or phone numbers...',
-      prefixIcon: const Icon(Icons.search),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+  Widget _buildSearchField() {
+    return TextField(
+      controller: _searchController,
+      decoration: InputDecoration(
+        labelText: 'Search',
+        hintText: 'Search messages or phone numbers...',
+        prefixIcon: const Icon(Icons.search),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        filled: true,
+        fillColor: Colors.grey.shade50,
       ),
-      filled: true,
-      fillColor: Colors.grey.shade50,
-    ),
-    onChanged: (value) {
-      // Debounce the search to avoid too many API calls
-      _debounceSearch();
-    },
-  );
-}
+      onChanged: (value) => _applyFilters(),
+    );
+  }
 
-Widget _buildFilterButton() {
-  return SizedBox(
-    width: double.infinity,
-    child: ElevatedButton.icon(
-      onPressed: () {
-        HapticFeedback.selectionClick();
-        _applyFiltersWithReload(); // Changed from _applyFilters()
-      },
-      icon: const Icon(Icons.filter_list, size: 18),
-      label: const Text('Apply Filters'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF667eea),
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+  Widget _buildFilterButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: () {
+          HapticFeedback.selectionClick();
+          _applyFilters();
+        },
+        icon: const Icon(Icons.filter_list, size: 18),
+        label: const Text('Apply Filters'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF667eea),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildStatsGrid(bool isTablet) {
     return GridView.count(
@@ -1368,25 +1343,4 @@ Widget _buildFilterButton() {
 }
 
 // Data Models
-/*class SMSLog {
-  final String id;
-  final String phoneNumber;
-  final String message;
-  final LogStatus status;
-  final LogType type;
-  final DateTime timestamp;
-  final double deliveryTime;
 
-  SMSLog({
-    required this.id,
-    required this.phoneNumber,
-    required this.message,
-    required this.status,
-    required this.type,
-    required this.timestamp,
-    required this.deliveryTime,
-  });
-}
-
-enum LogStatus { sent, failed, pending } 
-enum LogType { outbound, inbound }*/
