@@ -2,11 +2,11 @@
 
 This Flutter-based mobile application is part of a full-stack system designed to bridge applications (web, mobile, or embedded) with GSM networks. It communicates with a RESTful API to send and receive SMS messages through a secure and intuitive interface.
 
-> 🏫 This project was developed as part of a **4th-year group project** at the **Higher National School of Computer Science (ESI Algiers)**, within the **Intelligent and Communicant Systems** module — a course focused on IoT, embedded systems, and smart communication technologies.
+> This project was developed as part of a **4th-year group project** at the **Higher National School of Computer Science (ESI Algiers)**, within the **Intelligent and Communicant Systems** module — a course focused on IoT, embedded systems, and smart communication technologies.
 
 ---
 
-## 🚀 Features
+## Features
 
 - 📤 Send SMS messages via a user-friendly form  
 - 📥 Receive and display incoming SMS in real time  
@@ -16,7 +16,7 @@ This Flutter-based mobile application is part of a full-stack system designed to
 
 ---
 
-## 🧩 Technologies Used
+## Technologies Used
 
 - **Language:** Dart  
 - **Framework:** Flutter  
@@ -24,7 +24,7 @@ This Flutter-based mobile application is part of a full-stack system designed to
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 #### 🟢 Landing Page  
 ![Landing Page](images/landingPage.png)
@@ -43,17 +43,17 @@ This Flutter-based mobile application is part of a full-stack system designed to
 
 ---
 
-## 🛠️ Installation & Usage
+##  Usage
 
 ```bash
 git clone https://github.com/ics-projet/Mobile_app.git
 cd Mobile_app
 flutter pub get
 flutter run
+```
 
 
-
-## 📂 Related Repositories
+## Related Repositories
 
 This mobile application is part of a complete system hosted in the [ics-projet GitHub organization](https://github.com/ics-projet), which includes:
 
